@@ -324,7 +324,7 @@ class BNO055:
       calib_status=self.getCalibrationStatus()
       time.sleep(0.01)
     print('Accelerometer calibrated /n Calibrating system, ')
-    while calib_status[2]!=3:
+    while calib_status[0]!=3:
       calib_status=self.getCalibrationStatus()
       time.sleep(0.01)
       print(calib_status)
