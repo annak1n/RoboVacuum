@@ -330,14 +330,16 @@ class BNO055:
       print(calib_status)
     calibration = bno.getCalibration()
     db = shelve.open(calibrationFile)
-    db['calibration']=calibration
+    db['BNO055_calibration']=calibration
     db.close()    
 
   def getCalibrationFromFile(self,calibrationFile='calibration_data.db'):
     db = shelve.open(calibrationFile)
-    calibration=db['calibration']
+    calibration=db['BNO055_calibration']
     db.close()
     self.setCalibration(calibration)
+    
+  
 
 if __name__ == '__main__':
   bno = BNO055()
@@ -346,7 +348,17 @@ if __name__ == '__main__':
     exit()
   time.sleep(1)
   bno.setExternalCrystalUse(True)
+  
+ # bno.AssistedCalibration()
   bno.getCalibrationFromFile()
+  offset=[0,0,0]
+  b_size=1000
+
+  #print(temp)
+  pos=[0,0,0]
+  vel=[0,0,0]
   while True:
-    print(bno.getLinearAcceleration())
-    time.sleep(0.01)
+    print(bno.getVector(BNO055.VECTOR_EULER))
+    
+    
+    time.sleep(0.05)
