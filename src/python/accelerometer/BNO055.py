@@ -307,6 +307,8 @@ class BNO055:
 
   def writeBytes(self, register, byteVals):
     return self._bus.write_i2c_block_data(self._address, register, byteVals)
+  def flip_xyz(self):
+    self.writeBytes(BNO.BNO055_AXIS_MAP_CONFIG_ADDR,0x6)
 
   def AssistedCalibration(self,calibrationFile='calibration_data.db'):
     self.begin()
