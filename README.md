@@ -7,7 +7,7 @@ After disassembly via removing all screws on bottom of robot all cirtcuit boards
 
 ![Robo Clean](images/original_guts.jpg?raw=true "Roboclean next generation")
 
-Structural modification are detailed bellow:
+## Structural modification:
 
 The 5000mAh battery is about the same volume as the original 2400mAh. Unfurtunaly it i not the same in dimenion, so a section of the battery bay needs to be removed.
 
@@ -20,3 +20,11 @@ Also the square pannel to the right needs to be removed.
 In the lid there are two modifications, a large rectangular hole should be cut for the RPI and two small slots for slide switches. The location of the slide switch holes are not important, but the chosen location is close to the battery terminals.
 
 ![Robo Clean](images/structure/lid_cut.jpg?raw=true "Roboclean next generation")
+
+## Part lists:
+- Roboclean
+- raspberry PI 3 model B
+- Adafruit BNO055
+- 2 X Adafruit motor and stepper hat
+- ADC PI Plus (ABE electonics)
+- 
