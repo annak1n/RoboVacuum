@@ -39,10 +39,10 @@ FInally the front IR proximity sensor in the lid should be removed.
 ### Lid
 The lid first needs to have the Sharp IR sensor added, in the place of the original fron sensor. There is a little bit of adjustment required to get it flush with the front. As the plastic is soft you can do this with pliers.
 
-![Robo Clean](images/assebly/dist_sensor1.jpg?raw=true "Roboclean next generation")
+![Robo Clean](images/assembly/dist_sensor1.jpg?raw=true "Roboclean next generation")
 
-![Robo Clean](images/assebly/dist_sensor2.jpg?raw=true "Roboclean next generation")
+![Robo Clean](images/assembly/dist_sensor2.jpg?raw=true "Roboclean next generation")
 
 The storeed contacts from the main board need some wires soldered onto them and can be mounted again in the same possition.
 
-![Robo Clean](images/assebly/dustbin_contact.jpg?raw=true "Roboclean next generation")
+![Robo Clean](images/assembly/dustbin_contact.jpg?raw=true "Roboclean next generation")
