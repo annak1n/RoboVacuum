@@ -6,6 +6,7 @@ from Adafruit_BNO055 import BNO055 as AD
 
 '''
 This is a super class for the adafruit BNO055 class. This adds two functions, assisted calibration and get calibration from file.
+The shelve module is used to store these n a database file, and to read them out if the appropiate function is called.
 '''
 
 class BNO055(AD.BNO055):
@@ -16,21 +17,25 @@ class BNO055(AD.BNO055):
                  serial_port, serial_timeout_sec, **kwargs)
 
   def AssistedCalibration(self,calibrationFile='calibration_data.db'):
+    '''
+      Assisted Calibration, prompts user via the shell to perform validation 
+      steps and saves them in a DB. The database name can be give as an argument.
+    '''
     self.begin()
     calib_status=[0,0,0,0]
-    print('Waiting for Gyroscope to calibrate, do not move')
+    print('Waiting for Gyroscope to calibrate, do not mov/ne')
     while calib_status[1]!=3:
       calib_status=self.get_calibration_status()
       time.sleep(0.01)
-    print('Gryoscope calibrated /n Calibrating compass, move the sensor in a figure of eight')
+    print('Gryoscope calibrated /n Calibrating compass, move the sensor in a figure of eight/n')
     while calib_status[3]!=3:
       calib_status=self.get_calibration_status()
       time.sleep(0.01)
-    print('Compass calibrated /n Calibrating accelerometer, move the sensor in 45 degree increments in around each axis')
+    print('Compass calibrated /n Calibrating accelerometer, move the sensor in 45 degree/n increments in around each axis /n this is really annoying to do.. /n')
     while calib_status[2]!=3:
       calib_status=self.get_calibration_status()
       time.sleep(0.01)
-    print('Accelerometer calibrated /n Calibrating system, ')
+    print('Accelerometer calibrated /n Calibrating system (whatever that means)/n ')
     while calib_status[0]!=3:
       calib_status=self.get_calibration_status()
       time.sleep(0.01)
@@ -41,17 +46,27 @@ class BNO055(AD.BNO055):
     db.close()    
 
   def getCalibrationFromFile(self,calibrationFile='calibration_data.db'):
+    '''
+    Reading the calibration data from a file. Default name can be changed.
+    '''
     db = shelve.open(calibrationFile)
     calibration=db['BNO055_calibration']
     db.close()
     self.set_calibration(calibration)
   def setExternalCrystalUse(self,value):
+  '''
+  This function is for weaning myself off the other python library
+  '''
     A=1
     
     
   
 
 if __name__ == '__main__':
+
+  '''
+  Library when called starts assisted calibration, then just reads off values...
+  '''
   bno = BNO055()
   if bno.begin() is not True:
     print "Error initializing device"
@@ -59,7 +74,7 @@ if __name__ == '__main__':
   time.sleep(1)
   #bno.setExternalCrystalUse(True)
   
- # bno.AssistedCalibration()
+  bno.AssistedCalibration()
   bno.getCalibrationFromFile()
   offset=[0,0,0]
   b_size=1000
