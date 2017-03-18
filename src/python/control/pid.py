@@ -11,6 +11,13 @@
 #     pid = p.update(measurement_value)
 #
 #
+def GetAngleDifference( A,  B):
+    difference = A - B;
+    while (difference < -180):
+      difference += 360
+    while (difference > 180):
+      difference-= 360
+    return difference
 
 
 class PID:
@@ -18,7 +25,7 @@ class PID:
     Discrete PID control
     """
 
-    def __init__(self, P=2.0, I=0.0, D=1.0, Derivator=0, Integrator=0, Integrator_max=500, Integrator_min=-500):
+    def __init__(self, P=2.0, I=0.0, D=1.0, Derivator=0, Integrator=0, Integrator_max=500, Integrator_min=-500,Angle=False):
 
         self.Kp = P
         self.Ki = I
@@ -27,7 +34,7 @@ class PID:
         self.Integrator = Integrator
         self.Integrator_max = Integrator_max
         self.Integrator_min = Integrator_min
-
+        self.Angle=Angle
         self.set_point = 0.0
         self.error = 0.0
 
@@ -36,7 +43,12 @@ class PID:
         Calculate PID output value for given reference input and feedback
         """
 
-        self.error = self.set_point - current_value
+        
+        if self.Angle==True:
+           self.error= GetAngleDifference(self.set_point,current_value)
+        else:
+          self.error = self.set_point - current_value
+          
 
         self.P_value = self.Kp * self.error
         self.D_value = self.Kd * (self.error - self.Derivator)

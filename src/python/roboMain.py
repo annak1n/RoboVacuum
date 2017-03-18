@@ -31,29 +31,41 @@ class Robot(object):
         self.bno.getCalibrationFromFile(calibrationFile='calibration_data_A.db')
         self.distance = DM.distanceMeas(calibrationFile='calibration_data.db')
         self.speed = 0
-        self.angle = self.bno.readOrientationCS()[0]
-        self.pid = PID.PID(I=1, P=1)
+        self.setAngle =0
+        self.RealAngle = self.bno.readOrientationCS()[0]
+        self.pid = PID.PID(I=0.2, P=0.5,D=0.0,Angle=True)
 
-    def setSpeedAngle(self):
-        while self.sema:
-            err = self.pid.update(self.bno.readOrientationCS()[0])
+    def setSpeedAngle(self,a):
+        while self.sema==True:
+            self.RealAngle=self.bno.readOrientationCS()[0]
+            err = self.pid.update(self.RealAngle)
             self.driveMotors.set_speed([self.speed, self.speed + err])
             time.sleep(0.01)
+        self.driveMotors.set_speed([0,0])
     
+    def setSpeedAngleManual(self):
+      self.RealAngle=self.bno.readOrientationCS()[0]
+      err = self.pid.update(self.RealAngle)
+      print err
+      self.driveMotors.set_speed([self.speed, self.speed + err])
+      
     def updateSpeedAngle(self,setSpeed, setAngle):
         self.speed = setSpeed
-        self.angle = setAngle
-        self.pid.setPoint(self.angle)
+        self.setAngle = setAngle
+        self.pid.setPoint(self.setAngle)
 
     def updateDeltaSpeedAngle(self,setSpeed, setAngle):
         self.speed += setSpeed
-        self.angle += setAngle
-        self.pid.setPoint(self.angle)
+        self.setAngle += setAngle
+        self.pid.setPoint(self.setAngle)
        
 
     def begin(self):
+        print("starting guidance")
         self.sema=True
-        self.guidence=thread.start_new_thread(self.setSpeedAngle())
+        print("starting guidance")
+        self.guidence=thread.start_new_thread(self.setSpeedAngle,(1,))
+        print("gidance thread initiated")
 
     def stop(self):
         self.sema=False

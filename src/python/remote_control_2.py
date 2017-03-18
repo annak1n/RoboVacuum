@@ -29,14 +29,16 @@ def getch():
 
 r = Robot()
 
-
+r.begin()
 while True:
     key = getch()
 
     time.sleep(0.01)
-    print(r.speed,r.angle)
+    
+    #r.setSpeedAngleManual()
     #worker=thread.start_new_thread(text.write,('Distance= '+str(distance),))
     os.system('cls' if os.name == 'nt' else 'clear')
+    print(r.speed,r.RealAngle,r.setAngle)
    # print('angle=', angle[0],'distance= ',float(distance))
     if key == 'q':
         r.updateSpeedAngle(0, 0)
@@ -57,6 +59,9 @@ while True:
 
     elif key == 'e':
         r.stopBrush()
+        r.stop()
+        time.sleep(1)
         r.updateSpeedAngle(0, 0)
+        r.setSpeedAngleManual()
     else:
         a = 1
