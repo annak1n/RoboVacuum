@@ -3,7 +3,7 @@ import sys
 import time
 import shelve
 from Adafruit_BNO055 import BNO055 as AD
-
+import numpy as np
 '''
 This is a super class for the adafruit BNO055 class. This adds two functions, assisted calibration and get calibration from file.
 The shelve module is used to store these n a database file, and to read them out if the appropiate function is called.
@@ -58,8 +58,18 @@ class BNO055(AD.BNO055):
   This function is for weaning myself off the other python library
   '''
     A=1
-    
-    
+  def clockStretchBugMode(self,buffer_size=3):
+        #function to make datastrcutures in class for dealing with clock stretching bug
+        self.old_angles=np.zeros(buffer_size,3)
+        self.old_angles_itt=0
+        self.old_angles_buff_size=buffer_size
+  def readOrientationCS(self):
+        #the easiest way I have for dealing with the big is median filtering. A buffer is generated and the angles added. The median angles are returned.
+        self.old_angles[self.old_angles_itt,:]=self.read_euler()
+        self.old_angles_itt+=1
+        if self.old_angles_itt==self.old_angles_buff_size:
+              self.old_angles_itt=0
+        return( np.median(self.old_angles,axis=0))
   
 
 if __name__ == '__main__':
