@@ -16,7 +16,7 @@ from  threading import Semaphore
 
 class Robot(object):
     '''
-    docstring for class
+    Class for containing all robot motore and sensing functions
     '''
 
     def __init__(self, driveMotors=MC.motor_control(0x61, [1, 3], [1, -1]), brushMotors=MC.motor_control(0x60, [2, 3, 4], [-1, 1, 1])):
@@ -46,7 +46,7 @@ class Robot(object):
     def setSpeedAngleManual(self):
       self.RealAngle=self.bno.readOrientationCS()[0]
       err = self.pid.update(self.RealAngle)
-      print err
+      print(err)
       self.driveMotors.set_speed([self.speed, self.speed + err])
       
     def updateSpeedAngle(self,setSpeed, setAngle):
@@ -57,6 +57,12 @@ class Robot(object):
     def updateDeltaSpeedAngle(self,setSpeed, setAngle):
         self.speed += setSpeed
         self.setAngle += setAngle
+        if self.setAngle>360:
+                self.setAngle-=360
+        elif self.setAngle<0:
+            self.setAngle+=360
+        
+            
         self.pid.setPoint(self.setAngle)
        
 
