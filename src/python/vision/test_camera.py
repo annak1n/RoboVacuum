@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 with picamera.PiCamera() as camera:
-    #2592�1944
+
     camera.resolution = (2592, 1944)
     camera.framerate = 24
     time.sleep(2)
