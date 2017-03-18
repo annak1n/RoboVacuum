@@ -54,14 +54,14 @@ class BNO055(AD.BNO055):
     db.close()
     self.set_calibration(calibration)
   def setExternalCrystalUse(self,value):
-  '''
-  This function is for weaning myself off the other python library
-  '''
+    '''
+    This function is for weaning myself off the other python library
+    '''
     A=1
     
   def clockStretchBugMode(self,buffer_size=3):
         #function to make datastrcutures in class for dealing with clock stretching bug
-        self.old_angles=np.zeros(buffer_size,3)
+        self.old_angles=np.zeros((buffer_size,3))
         self.old_angles_itt=0
         self.old_angles_buff_size=buffer_size
   def readOrientationCS(self):

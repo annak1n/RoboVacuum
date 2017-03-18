@@ -34,7 +34,7 @@ while True:
     key = getch()
 
     time.sleep(0.01)
-
+    print(r.speed,r.angle)
     #worker=thread.start_new_thread(text.write,('Distance= '+str(distance),))
     os.system('cls' if os.name == 'nt' else 'clear')
    # print('angle=', angle[0],'distance= ',float(distance))

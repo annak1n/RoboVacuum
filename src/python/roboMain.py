@@ -22,33 +22,33 @@ class Robot(object):
     def __init__(self, driveMotors=MC.motor_control(0x61, [1, 3], [1, -1]), brushMotors=MC.motor_control(0x60, [2, 3, 4], [-1, 1, 1])):
         self.driveMotors = driveMotors
         self.brushMotors = brushMotors
-        self.bno = BNO055(i2c=True)
+        self.bno = BNO055(rst=None,serial_port=None)
         self.bno.clockStretchBugMode(buffer_size=3)
-        if bno.begin() is not True:
-            print(str("Error initializing device"), end='\n')
+        if self.bno.begin() is not True:
+            print(str("Error initializing device"))
             exit()
         time.sleep(0.5)
         self.bno.getCalibrationFromFile(calibrationFile='calibration_data_A.db')
         self.distance = DM.distanceMeas(calibrationFile='calibration_data.db')
         self.speed = 0
-        self.angle = self.bno.readOrientationCS()
+        self.angle = self.bno.readOrientationCS()[0]
         self.pid = PID.PID(I=1, P=1)
 
     def setSpeedAngle(self):
         while self.sema:
-            err = self.pid.update(self.bno.readOrientationCS())
+            err = self.pid.update(self.bno.readOrientationCS()[0])
             self.driveMotors.set_speed([self.speed, self.speed + err])
             time.sleep(0.01)
     
     def updateSpeedAngle(self,setSpeed, setAngle):
         self.speed = setSpeed
         self.angle = setAngle
-        self.pid.set_point(self.angle)
+        self.pid.setPoint(self.angle)
 
     def updateDeltaSpeedAngle(self,setSpeed, setAngle):
         self.speed += setSpeed
         self.angle += setAngle
-        self.pid.set_point(self.angle)
+        self.pid.setPoint(self.angle)
        
 
     def begin(self):
