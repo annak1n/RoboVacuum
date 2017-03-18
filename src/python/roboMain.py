@@ -12,7 +12,7 @@ import thread
 import control.pid as PID
 from accelerometer.BNO055 import BNO055
 import ADC.IR_distance as DM
-
+from  threading import Semaphore
 
 class Robot(object):
     '''
@@ -28,19 +28,37 @@ class Robot(object):
             print(str("Error initializing device"), end='\n')
             exit()
         time.sleep(0.5)
-        bno.getCalibrationFromFile(calibrationFile='calibration_data_A.db')
+        self.bno.getCalibrationFromFile(calibrationFile='calibration_data_A.db')
         self.distance = DM.distanceMeas(calibrationFile='calibration_data.db')
         self.speed = 0
-        self.angle = bno.readOrientationCS()
+        self.angle = self.bno.readOrientationCS()
         self.pid = PID.PID(I=1, P=1)
 
-    def setSpeedAngle(self, setSpeed, setAngle):
+    def setSpeedAngle(self):
+        while self.sema:
+            err = self.pid.update(self.bno.readOrientationCS())
+            self.driveMotors.set_speed([self.speed, self.speed + err])
+            time.sleep(0.01)
+    
+    def updateSpeedAngle(self,setSpeed, setAngle):
         self.speed = setSpeed
         self.angle = setAngle
         self.pid.set_point(self.angle)
-        err = self.pid.update(bno.readOrientationCS())
-        worker = thread.start_new_thread(self.driveMotors.set_speed, [
-                                         self.speed, self.speed + err])
+
+    def updateDeltaSpeedAngle(self,setSpeed, setAngle):
+        self.speed += setSpeed
+        self.angle += setAngle
+        self.pid.set_point(self.angle)
+       
+
+    def begin(self):
+        self.sema=True
+        self.guidence=thread.start_new_thread(self.setSpeedAngle())
+
+    def stop(self):
+        self.sema=False
+
+
     def startBrush(self):
         worker = thread.start_new_thread(self.brushMotors.set_speed, [255,255,255])
 

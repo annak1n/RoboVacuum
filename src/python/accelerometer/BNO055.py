@@ -58,6 +58,7 @@ class BNO055(AD.BNO055):
   This function is for weaning myself off the other python library
   '''
     A=1
+    
   def clockStretchBugMode(self,buffer_size=3):
         #function to make datastrcutures in class for dealing with clock stretching bug
         self.old_angles=np.zeros(buffer_size,3)
