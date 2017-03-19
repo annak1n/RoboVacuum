@@ -23,7 +23,7 @@ class Robot(object):
         self.driveMotors = driveMotors
         self.brushMotors = brushMotors
         self.bno = BNO055(rst=None,serial_port=None)
-        self.bno.clockStretchBugMode(buffer_size=3)
+        self.bno.clockStretchBugMode(buffer_size=7)
         if self.bno.begin() is not True:
             print(str("Error initializing device"))
             exit()
@@ -37,14 +37,15 @@ class Robot(object):
 
     def setSpeedAngle(self,a):
         while self.sema==True:
-            self.RealAngle=self.bno.readOrientationCS()[0]
+            self.RealAngle=self.bno.readOrientationCS()[0]-8
             err = self.pid.update(self.RealAngle)
             self.driveMotors.set_speed([self.speed, self.speed + err])
             time.sleep(0.01)
         self.driveMotors.set_speed([0,0])
+        exit()
     
     def setSpeedAngleManual(self):
-      self.RealAngle=self.bno.readOrientationCS()[0]
+      self.RealAngle=self.bno.readOrientationCS()[0]-8
       err = self.pid.update(self.RealAngle)
       print err
       self.driveMotors.set_speed([self.speed, self.speed + err])
@@ -72,9 +73,9 @@ class Robot(object):
 
 
     def startBrush(self):
-        worker = thread.start_new_thread(self.brushMotors.set_speed, [255,255,255])
+        worker = thread.start_new_thread(self.brushMotors.set_speed, ([255,255,255],))
 
     def stopBrush(self):
-        worker = thread.start_new_thread(self.brushMotors.set_speed, [0,0,0])
+        worker = thread.start_new_thread(self.brushMotors.set_speed, ([0,0,0],))
 
 
