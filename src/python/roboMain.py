@@ -22,8 +22,8 @@ class Robot(object):
     def __init__(self, driveMotors=MC.motor_control(0x61, [1, 3], [1, -1]), brushMotors=MC.motor_control(0x60, [2, 3, 4], [-1, 1, 1])):
         self.driveMotors = driveMotors
         self.brushMotors = brushMotors
-        self.bno = BNO055(rst=None,serial_port=None)
-        self.bno.clockStretchBugMode(buffer_size=7)
+        self.bno = BNO055(serial_port='/dev/ttyUSB0',rst=None)
+        #self.bno.clockStretchBugMode(buffer_size=7)
         if self.bno.begin() is not True:
             print(str("Error initializing device"))
             exit()
@@ -32,12 +32,12 @@ class Robot(object):
         self.distance = DM.distanceMeas(calibrationFile='calibration_data.db')
         self.speed = 0
         self.setAngle =0
-        self.RealAngle = self.bno.readOrientationCS()[0]
+        self.RealAngle = self.bno.read_euler()[0]
         self.pid = PID.PID(I=0.2, P=0.5,D=0.0,Angle=True)
 
     def setSpeedAngle(self,a):
         while self.sema==True:
-            self.RealAngle=self.bno.readOrientationCS()[0]-8
+            self.RealAngle=self.bno.read_euler()[0]
             err = self.pid.update(self.RealAngle)
             self.driveMotors.set_speed([self.speed, self.speed + err])
             time.sleep(0.01)
@@ -45,7 +45,7 @@ class Robot(object):
         exit()
     
     def setSpeedAngleManual(self):
-      self.RealAngle=self.bno.readOrientationCS()[0]-8
+      self.RealAngle=self.bno.read_euler()[0]
       err = self.pid.update(self.RealAngle)
       print(err)
       self.driveMotors.set_speed([self.speed, self.speed + err])

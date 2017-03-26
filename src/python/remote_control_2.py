@@ -47,10 +47,10 @@ while True:
         r.updateDeltaSpeedAngle(10, 0)
         # motors.set_speed([255,255])
     elif key == 'a':
-        r.updateDeltaSpeedAngle(0, 5)
+        r.updateDeltaSpeedAngle(0, -5)
         # motors.set_speed([100,-100])
     elif key == 'd':
-        r.updateDeltaSpeedAngle(0, -5)
+        r.updateDeltaSpeedAngle(0, 5)
         # motors.set_speed([-100,100])
     elif key == 's':
         r.updateDeltaSpeedAngle(-10, 0)
