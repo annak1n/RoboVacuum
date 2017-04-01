@@ -29,7 +29,7 @@ class motor_device():
         '''
         speed *= self.direction
         if speed > 0.5:
-            self.motor[i].run(Adafruit_MotorHAT.FORWARD)
+            self.motor.run(Adafruit_MotorHAT.FORWARD)
             if speed > 255:
                 speed = 255
             self.motor.setSpeed((abs(int(speed))))
@@ -38,7 +38,7 @@ class motor_device():
                 speed = -255
 
             self.motor.run(Adafruit_MotorHAT.BACKWARD)
-            self.motor.setSpeed((abs(int(speed[i]))))
+            self.motor.setSpeed((abs(int(speed))))
         else:
             self.motor.run(Adafruit_MotorHAT.RELEASE)
 
@@ -52,10 +52,11 @@ class motor_group():
     '''
 
     def __init__(self, imh_adress, motor_id, direction):
+        self.motor=[]
         for i in range(0, len(motor_id)):
-            self.motor[i] = motor_device(
-                imh_adress[i], motor_ids[i], direction[i])
+            self.motor.append( motor_device(
+                imh_adress[i], motor_id[i], direction[i]))
 
     def set_speed(self, speed):
         for i in range(len(speed)):
-            self.motor.setSpeed(speed[i])
+            self.motor[i].setSpeed(speed[i])

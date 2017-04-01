@@ -31,7 +31,7 @@ class Robot(object):
         - Connection to distance sensor
         '''
         self.driveMotors = MC.motor_group([0x61, 0x61], [1, 3], [1, -1])
-        self.brushMotors = MC.motor_groups([0x60, 0x60, 0X61], [2, 3, 4], [-1, 1, 1])
+        self.brushMotors = MC.motor_group([0x60, 0x60, 0X61], [2, 3, 4], [-1, 1, 1])
         self.bno = BNO055(serial_port='/dev/ttyUSB0', rst=None)
         # self.bno.clockStretchBugMode(buffer_size=7)
         if self.bno.begin() is not True:
@@ -56,14 +56,14 @@ class Robot(object):
         self.Jacobian[2, 1] = -self.Jacobian[2, 0]
 
     def setSpeedAngle(self, a):
-        old_time=time.time()
+        old_time=time.clock()
         while self.sema == True:
             
             self.RealAngle = self.bno.read_euler()[0]
             err = self.pid.update(self.RealAngle)
             self.driveMotors.set_speed([self.speed, self.speed + err])
-            new_time=time.time()
-            time.sleep(0.01-(new_time-old_time))
+            new_time=time.clock()
+            time.sleep(0.02-(new_time-old_time))
             old_time=new_time
         self.driveMotors.set_speed([0, 0])
         exit()
