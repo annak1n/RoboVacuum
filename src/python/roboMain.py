@@ -56,11 +56,15 @@ class Robot(object):
         self.Jacobian[2, 1] = -self.Jacobian[2, 0]
 
     def setSpeedAngle(self, a):
+        old_time=time.time()
         while self.sema == True:
+            
             self.RealAngle = self.bno.read_euler()[0]
             err = self.pid.update(self.RealAngle)
             self.driveMotors.set_speed([self.speed, self.speed + err])
-            time.sleep(0.01)
+            new_time=time.time()
+            time.sleep(0.01-(new_time-old_time))
+            old_time=new_time
         self.driveMotors.set_speed([0, 0])
         exit()
 

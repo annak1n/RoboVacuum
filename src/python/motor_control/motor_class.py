@@ -6,12 +6,13 @@ import time
 
 
 class motor_device():
-      '''A wrapped class for adafruits motor hat, this allows the motor to
-      take a floating point inputs from -255 to +255. The class automatically
-       changes the motor directions.
-       The class also allows the direction of the motor to be flipped with a [-1 or +1] direction variable.
+    '''A wrapped class for adafruits motor hat, this allows the motor to
+    take a floating point inputs from -255 to +255. The class automatically
+     changes the motor directions.
+     The class also allows the direction of the motor to be flipped with a [-1 or +1] direction variable.
 
-      '''
+    '''
+
     def __init__(self, imh_adress, motor_id, direction):
         '''The class as an input requires the i2c adress of the motor
          controller and the motor numbers and direction of spin (+1 or -1)
@@ -21,7 +22,7 @@ class motor_device():
         self.direction = direction
         self.motor = self.device.getMotor(motor_id)
 
-    def setSpeed(self,speed):
+    def setSpeed(self, speed):
         '''This method changes the speed, doing bounds checks for the maximum values
          and dealing with the motor inversion for negative speeds.
 
@@ -49,6 +50,7 @@ class motor_group():
     '''This class is for using groups for motors potentially on different controllers
 
     '''
+
     def __init__(self, imh_adress, motor_id, direction):
         for i in range(0, len(motor_id)):
             self.motor[i] = motor_device(
