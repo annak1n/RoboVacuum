@@ -3,29 +3,57 @@ from scipy.optimize import minimize
 
 from Adafruit_MotorHAT import Adafruit_MotorHAT, Adafruit_DCMotor
 import time
-class motor_control():
-  def __init__(self,imh_adress,motor_ids,direction):
-    self.device=Adafruit_MotorHAT(addr=imh_adress)
-    self.motor={}
-    self.direction=direction
-    for i in range(0,len(motor_ids)):
-      print(i)
-      self.motor[i]=self.device.getMotor(motor_ids[i])
-      
-  def set_speed(self,speed):
-    for i in range(len(speed)):
-      #print(i)
-      speed[i]*=self.direction[i]
-      if speed[i]>0.1:
-        self.motor[i].run(Adafruit_MotorHAT.FORWARD)
-        if speed[i]>255:
-          speed[i]=255
-        self.motor[i].setSpeed((abs(int(speed[i]))))
-      elif speed[i]<-0.1:
-        if speed[i]<-255:
-          speed[i]=-255
-        
-        self.motor[i].run(Adafruit_MotorHAT.BACKWARD)
-        self.motor[i].setSpeed((abs(int(speed[i]))))
-      else:
-        self.motor[i].run(Adafruit_MotorHAT.RELEASE)
+
+
+class motor_device():
+      '''A wrapped class for adafruits motor hat, this allows the motor to
+      take a floating point inputs from -255 to +255. The class automatically
+       changes the motor directions.
+       The class also allows the direction of the motor to be flipped with a [-1 or +1] direction variable.
+
+      '''
+    def __init__(self, imh_adress, motor_id, direction):
+        '''The class as an input requires the i2c adress of the motor
+         controller and the motor numbers and direction of spin (+1 or -1)
+
+        '''
+        self.device = Adafruit_MotorHAT(addr=imh_adress)
+        self.direction = direction
+        self.motor = self.device.getMotor(motor_id)
+
+    def setSpeed(self,speed):
+        '''This method changes the speed, doing bounds checks for the maximum values
+         and dealing with the motor inversion for negative speeds.
+
+        '''
+        speed *= self.direction
+        if speed > 0.5:
+            self.motor[i].run(Adafruit_MotorHAT.FORWARD)
+            if speed > 255:
+                speed = 255
+            self.motor.setSpeed((abs(int(speed))))
+        elif speed < -0.5:
+            if speed < -255:
+                speed = -255
+
+            self.motor.run(Adafruit_MotorHAT.BACKWARD)
+            self.motor.setSpeed((abs(int(speed[i]))))
+        else:
+            self.motor.run(Adafruit_MotorHAT.RELEASE)
+
+    def __exit__(self):
+        self.motor.run(Adafruit_MotorHAT.RELEASE)
+
+
+class motor_group():
+    '''This class is for using groups for motors potentially on different controllers
+
+    '''
+    def __init__(self, imh_adress, motor_id, direction):
+        for i in range(0, len(motor_id)):
+            self.motor[i] = motor_device(
+                imh_adress[i], motor_ids[i], direction[i])
+
+    def set_speed(self, speed):
+        for i in range(len(speed)):
+            self.motor.setSpeed(speed[i])

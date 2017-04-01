@@ -22,7 +22,7 @@ class Robot(object):
     Class for containing all robot motore and sensing functions
     '''
 
-    def __init__(self, driveMotors=MC.motor_control(0x61, [1, 3], [1, -1]), brushMotors=MC.motor_control(0x60, [2, 3, 4], [-1, 1, 1])):
+    def __init__(self):
         '''Initialisation of the main robot controller
         - Connection to motor controllers
             -brushMotors
@@ -30,8 +30,8 @@ class Robot(object):
         - Connection to accelerometer BNO055
         - Connection to distance sensor
         '''
-        self.driveMotors = driveMotors
-        self.brushMotors = brushMotors
+        self.driveMotors = MC.motor_group([0x61, 0x61], [1, 3], [1, -1])
+        self.brushMotors = MC.motor_groups([0x60, 0x60, 0X61], [2, 3, 4], [-1, 1, 1])
         self.bno = BNO055(serial_port='/dev/ttyUSB0', rst=None)
         # self.bno.clockStretchBugMode(buffer_size=7)
         if self.bno.begin() is not True:
@@ -51,6 +51,7 @@ class Robot(object):
 
         self.bodyRadius = 30  # cm
         self.wheelRadius = 6  # cm need to check
+        self.weight = 5
         self.Jacobian[2, 0] = 0.5 * self.bodyRadius / self.wheelRadius
         self.Jacobian[2, 1] = -self.Jacobian[2, 0]
 
