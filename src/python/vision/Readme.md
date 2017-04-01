@@ -4,6 +4,8 @@ This is an attempts at using a single camera facing upwards from the robot to pe
 
 ## TODO:
 - Get SCI-KIT image working on RPI, bersion I have seems out of date (?)
+..* required the removal of sudo apt get cython and installation of pip python
+
 - The alogorith to perform stero vision and get point cloud
 - Registering point cloud onto "globla view"
 
@@ -17,3 +19,5 @@ This is an attempts at using a single camera facing upwards from the robot to pe
 
 - A RANSAC(?) is used to combined the new point cloud with an existing map. The tranformation of this combination can then be used to determine a global position
 
+## smarter algorithm
+The ceiling will always be aproximatly the same height. The pseudo sterovision is likely not needed as it is then possible to create an angle map of pixels and look for features inside the "ceiling" planes intersection with the roof.
