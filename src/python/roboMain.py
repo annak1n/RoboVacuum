@@ -93,7 +93,7 @@ class Robot(object):
         elif self.setAngle < 0:
             self.setAngle += 360
 
-        self.pid.setPoint(self.setAngle)
+        self.pid_angle.setPoint(self.setAngle)
 
     def begin(self):
         print("starting guidance")
