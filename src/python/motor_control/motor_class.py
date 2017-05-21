@@ -1,9 +1,6 @@
-import numpy as np
-from scipy.optimize import minimize
-
 from Adafruit_MotorHAT import Adafruit_MotorHAT, Adafruit_DCMotor
 import time
-import atexit
+
 
 
 class motor_device():
@@ -22,6 +19,8 @@ class motor_device():
         self.device = Adafruit_MotorHAT(addr=imh_adress)
         self.direction = direction
         self.motor = self.device.getMotor(motor_id)
+        import atexit
+        atexit.register(self.cleanUp)
 
     def setSpeed(self, speed):
         '''This method changes the speed, doing bounds checks for the maximum values
@@ -42,7 +41,7 @@ class motor_device():
             self.motor.setSpeed((abs(int(speed))))
         else:
             self.motor.run(Adafruit_MotorHAT.RELEASE)
-    @atexit.register
+
     def cleanUp(self):
         self.motor.run(Adafruit_MotorHAT.RELEASE)
 

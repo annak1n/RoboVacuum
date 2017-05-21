@@ -44,7 +44,8 @@ class Robot(object):
         self.speed = 0
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]
-        self.pid = PID.PID(I=0.2, P=0.5, D=0.0, Angle=True)
+        self.pid_angle = PID.PID(I=0.2, P=0.5, D=0.0, Angle=True)
+        self.pid_speed = PID.PID(I=0.2, P=0.5, D=0.0)
         self.theta = np.zeros(2)
         self.position = np.zeros(3)
         self.theta_dot = np.zeros(2)
@@ -58,11 +59,14 @@ class Robot(object):
 
     def setSpeedAngle(self, a):
         old_time=time.clock()
+        enc=self.rotEncode.read_counters()
+        time.sleep(0.01)
         while self.sema == True:
-            
+            enc1,enc2=self.rotEncode.read_counters()
             self.RealAngle = self.bno.read_euler()[0]
-            err = self.pid.update(self.RealAngle)
-            self.driveMotors.set_speed([self.speed, self.speed + err])
+            err_angle = self.pid_angle.update(self.RealAngle)
+            err_speed = self.pid_speed.update(enc1-enc2)
+            self.driveMotors.set_speed([self.speed, self.speed + err_angle + err_speed])
             new_time=time.clock()
             time.sleep(0.02-(new_time-old_time))
             old_time=new_time
@@ -70,15 +74,16 @@ class Robot(object):
         exit()
 
     def setSpeedAngleManual(self):
+        
         self.RealAngle = self.bno.read_euler()[0]
-        err = self.pid.update(self.RealAngle)
+        err = self.pid_angle.update(self.RealAngle)
         print(err)
         self.driveMotors.set_speed([self.speed, self.speed + err])
 
     def updateSpeedAngle(self, setSpeed, setAngle):
         self.speed = setSpeed
         self.setAngle = setAngle
-        self.pid.setPoint(self.setAngle)
+        self.pid_angle.setPoint(self.setAngle)
 
     def updateDeltaSpeedAngle(self, setSpeed, setAngle):
         self.speed += setSpeed
