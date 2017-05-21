@@ -15,7 +15,7 @@ from accelerometer.BNO055 import BNO055
 import ADC.IR_distance as DM
 from threading import Semaphore
 from math import cos, sin, pi, radians
-
+from rotary_encoder import wheel_encoder as encoder
 
 class Robot(object):
     '''
@@ -49,7 +49,7 @@ class Robot(object):
         self.position = np.zeros(3)
         self.theta_dot = np.zeros(2)
         self.Jacobian = np.zeros((3, 2))
-
+        self.rotEncode = encoder.WheelEncoder()
         self.bodyRadius = 30  # cm
         self.wheelRadius = 6  # cm need to check
         self.weight = 5
