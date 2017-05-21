@@ -65,7 +65,7 @@ class Robot(object):
             enc1,enc2=self.rotEncode.read_counters()
             self.RealAngle = self.bno.read_euler()[0]
             err_angle = self.pid_angle.update(self.RealAngle)
-            err_speed = self.pid_speed.update(enc1-enc2)
+            err_speed = self.pid_speed.update(-enc1+enc2)
             self.driveMotors.set_speed([self.speed, self.speed + err_angle + err_speed])
             new_time=time.clock()
             time.sleep(0.02-(new_time-old_time))
