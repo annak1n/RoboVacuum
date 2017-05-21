@@ -3,6 +3,7 @@ from scipy.optimize import minimize
 
 from Adafruit_MotorHAT import Adafruit_MotorHAT, Adafruit_DCMotor
 import time
+import atexit
 
 
 class motor_device():
@@ -41,8 +42,8 @@ class motor_device():
             self.motor.setSpeed((abs(int(speed))))
         else:
             self.motor.run(Adafruit_MotorHAT.RELEASE)
-
-    def __exit__(self):
+    @atexit.register
+    def cleanUp(self):
         self.motor.run(Adafruit_MotorHAT.RELEASE)
 
 

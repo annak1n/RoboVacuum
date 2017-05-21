@@ -46,6 +46,7 @@ class Robot(object):
         self.RealAngle = self.bno.read_euler()[0]
         self.pid = PID.PID(I=0.2, P=0.5, D=0.0, Angle=True)
         self.theta = np.zeros(2)
+        self.position = np.zeros(3)
         self.theta_dot = np.zeros(2)
         self.Jacobian = np.zeros((3, 2))
 
@@ -112,3 +113,7 @@ class Robot(object):
         sa = sin(radians(self.RealAngle))
         self.Jacobian[0, :] = 0.5 * self.bodyRadius * ca
         self.Jacobian[1, :] = 0.5 * self.bodyRadius * sa
+    
+    def updatePosition(self,dS,dTheta):
+        A=np.array([cos(self.RealAngle), 0],[sin(self.RealAngle), 0],[0, 1])
+        self.position+=A.multiply([[dS],[dTheta]])
