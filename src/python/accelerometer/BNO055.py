@@ -12,7 +12,7 @@ The shelve module is used to store these n a database file, and to read them out
 class BNO055(AD.BNO055):
 
   def __init__(self, rst=18, address=0x28, i2c=None, gpio=None,
-                 serial_port='/dev/ttyAMA0', serial_timeout_sec=10, **kwargs):
+                 serial_port='/dev/ttyUSB0', serial_timeout_sec=10, **kwargs):
     super(BNO055,self).__init__( rst, address, i2c, gpio,
                  serial_port, serial_timeout_sec, **kwargs)
 

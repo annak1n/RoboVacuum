@@ -11,7 +11,7 @@ import time
 class distanceMeas():
   
   
-  def __init__(self,add1=0x6A,add2=0x6B,channel=1,calibrationFile=False):
+  def __init__(self,add1=0x69,add2=0x6B,channel=1,calibrationFile=False):
     i2c_helper = ABEHelpers()
     self.bus = i2c_helper.get_smbus()
     self.adc = ADCPi(self.bus, add1, add2, 12)
@@ -57,12 +57,12 @@ class distanceMeas():
     
     
 if __name__ == '__main__':
-  dm=distanceMeas(calibrationFile='calibration_data.db')
-  for i in range(10):
-    print(dm.getDistance())
-    time.sleep(0.5)
+  dm=distanceMeas()#calibrationFile='calibration_data.db'
+  #for i in range(10):
+    #print(dm.getDistance())
+    #time.sleep(0.5)
     
-  #dm.calibrate()
+  dm.calibrate()
 
   for i in range(30):
     print(dm.getDistance())
