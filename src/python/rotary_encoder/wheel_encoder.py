@@ -8,6 +8,8 @@ except RuntimeError:
 
 # Wheel encoder class, there should only ever be one of these
 # in the system
+
+# one full wheel rotation is 2**10 (1024) clicks
 class WheelEncoder: 
 
 	# constructor 

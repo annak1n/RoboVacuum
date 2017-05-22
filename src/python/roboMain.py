@@ -45,18 +45,19 @@ class Robot(object):
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]
         self.pid_angle = PID.PID(I=0.2, P=0.5, D=0.0, Angle=True)
-        self.pid_speed = PID.PID(I=0.2, P=0.5, D=0.0)
+        self.pid_speed = PID.PID(I=1, P=0, D=0.0)
         self.theta = np.zeros(2)
         self.position = np.zeros(3)
         self.theta_dot = np.zeros(2)
         self.Jacobian = np.zeros((3, 2))
         self.rotEncode = encoder.WheelEncoder()
-        self.bodyRadius = 30  # cm
-        self.wheelRadius = 6  # cm need to check
+        self.bodyRadius = 32  # cm
+        self.wheelRadius = 3  # cm need to check
+        self.wheel2wheel = 26.5 
         self.weight = 5
         self.Jacobian[2, 0] = 0.5 * self.bodyRadius / self.wheelRadius
         self.Jacobian[2, 1] = -self.Jacobian[2, 0]
-
+        self.temp=0
     def setSpeedAngle(self, a):
         old_time=time.clock()
         enc=self.rotEncode.read_counters()
@@ -64,9 +65,14 @@ class Robot(object):
         while self.sema == True:
             enc1,enc2=self.rotEncode.read_counters()
             self.RealAngle = self.bno.read_euler()[0]
-            err_angle = self.pid_angle.update(self.RealAngle)
-            err_speed = self.pid_speed.update(-enc1+enc2)
-            self.driveMotors.set_speed([self.speed, self.speed + err_angle + err_speed])
+            err_angle = 0#self.pid_angle.update(self.RealAngle)
+            if self.speed <0:
+              err_speed = self.pid_speed.update(enc1-enc2)
+            else:
+              err_speed = self.pid_speed.update(-enc1+enc2)
+            self.temp=err_speed
+
+            self.driveMotors.set_speed([self.speed-err_speed, self.speed + err_angle + err_speed])
             new_time=time.clock()
             time.sleep(0.02-(new_time-old_time))
             old_time=new_time

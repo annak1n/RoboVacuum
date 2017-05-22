@@ -38,7 +38,7 @@ while True:
     #r.setSpeedAngleManual()
     #worker=thread.start_new_thread(text.write,('Distance= '+str(distance),))
     os.system('cls' if os.name == 'nt' else 'clear')
-    print(r.speed,r.RealAngle,r.setAngle)
+    print(r.speed,r.RealAngle,r.temp)
    # print('angle=', angle[0],'distance= ',float(distance))
     if key == 'q':
         r.updateSpeedAngle(0, 0)
