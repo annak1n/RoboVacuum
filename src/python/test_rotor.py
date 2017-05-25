@@ -3,6 +3,8 @@ import motor_control.motor_class as MC
 import time
 from control.pid import PID
 from math import pi, copysign
+import wiringpi
+
 
 def calc_speed(clicks,dt):
   return(((float(clicks)/1024.0)*2.0*pi*3.0)/dt)
@@ -31,17 +33,17 @@ dt=0.02
 s_left=+0
 s_right=+0
 while clicks<total_clicks: 
-  t1=time.time()
+  t1=time.clock()
   c1,c2=enc.read_counters()
   speed_left=copysign(calc_speed(c2,dt),s_left)
   speed_right=copysign(calc_speed(c1,dt),s_right)
   clicks+=c1
-  t2=time.time()-t1
+  t2=time.clock()-t1
   
   s_left=pid_left.update(speed_left)
   s_right=pid_right.update(speed_right)
   driveMotors.set_speed([pid_right.update(speed_right), s_left])
   print(speed_left,speed_right)
-  time.sleep(dt-t2)
+  wiringpi.delayMicroseconds(round((dt-t2)*1e6)
   
 driveMotors.set_speed([0, 0])
