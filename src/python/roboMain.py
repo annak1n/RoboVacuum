@@ -16,6 +16,11 @@ import ADC.IR_distance as DM
 from threading import Semaphore
 from math import cos, sin, pi, radians
 from rotary_encoder import wheel_encoder as encoder
+from math import pi, copysign, atan
+import wiringpi
+
+def calc_speed(clicks,dt):
+      return(((float(clicks)/1024.0)*2.0*pi*3.0)/dt)
 
 class Robot(object):
     '''
@@ -44,8 +49,9 @@ class Robot(object):
         self.speed = 0
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]
-        self.pid_angle = PID.PID(I=0.2, P=0.5, D=0.0, Angle=True)
-        self.pid_speed = PID.PID(I=1, P=0, D=0.0)
+        self.pid_angle = PID.PID(I=10, P=0.5, D=0.0, Angle=True)
+        self.pid_left=PID(P=0.5,I=1,D=0)
+        self.pid_right=PID(P=0.5,I=1,D=0) 
         self.theta = np.zeros(2)
         self.position = np.zeros(3)
         self.theta_dot = np.zeros(2)
@@ -58,33 +64,33 @@ class Robot(object):
         self.Jacobian[2, 0] = 0.5 * self.bodyRadius / self.wheelRadius
         self.Jacobian[2, 1] = -self.Jacobian[2, 0]
         self.temp=0
+        self.route=[]
     def setSpeedAngle(self, a):
+        '''FUnction which is used to spawn the motor control thread
+
+        '''
         old_time=time.clock()
         enc=self.rotEncode.read_counters()
-        time.sleep(0.01)
+        wiringpi.delayMicroseconds(int((0.01)*1e6))
+        s_left=+0
+        s_right=+0
         while self.sema == True:
             enc1,enc2=self.rotEncode.read_counters()
-            self.RealAngle = self.bno.read_euler()[0]
-            err_angle = 0#self.pid_angle.update(self.RealAngle)
-            if self.speed <0:
-              err_speed = self.pid_speed.update(enc1-enc2)
-            else:
-              err_speed = self.pid_speed.update(-enc1+enc2)
-            self.temp=err_speed
 
-            self.driveMotors.set_speed([self.speed-err_speed, self.speed + err_angle + err_speed])
+            self.RealAngle = self.bno.read_euler()[0]
+            err_angle = self.pid_angle.update(self.RealAngle)
+            self.speed_left=copysign(calc_speed(enc2,dt),s_left)
+            self.speed_right=copysign(calc_speed(enc1,dt),s_right)
+
+            s_left=pid_left.update(self.speed_left)
+            s_right=pid_right.update(self.speed_right)
+            self.driveMotors.set_speed([s_right-err_angle, s_left+err_angle])
             new_time=time.clock()
-            time.sleep(0.02-(new_time-old_time))
+            wiringpi.delayMicroseconds(int((new_time-old_time)*1e6))
             old_time=new_time
         self.driveMotors.set_speed([0, 0])
         exit()
 
-    def setSpeedAngleManual(self):
-        
-        self.RealAngle = self.bno.read_euler()[0]
-        err = self.pid_angle.update(self.RealAngle)
-        print(err)
-        self.driveMotors.set_speed([self.speed, self.speed + err])
 
     def updateSpeedAngle(self, setSpeed, setAngle):
         self.speed = setSpeed
@@ -107,6 +113,18 @@ class Robot(object):
         print("starting guidance")
         self.guidence = thread.start_new_thread(self.setSpeedAngle, (1,))
         print("gidance thread initiated")
+
+    def here_to_there(self,B,speed):
+
+        angle =180* math.atan(B[1]/B[0])/pi
+        dist=np.norm(B)
+        self.updateSpeedAngle(0,angle)
+        while abs(self.pid_angle.error)>5:
+            time.sleep(0.1)
+        time = dist/speed
+        self.updateSpeedAngle(speed,angle)
+        time.sleep(time)
+        self.updateSpeedAngle(0,0)
 
     def stop(self):
         self.sema = False
