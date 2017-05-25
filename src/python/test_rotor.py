@@ -3,7 +3,12 @@ import motor_control.motor_class as MC
 import time
 from control.pid import PID
 from math import pi, copysign
+
 from accelerometer.BNO055 import BNO055
+
+import wiringpi
+
+
 
 def calc_speed(clicks,dt):
   return(((float(clicks)/1024.0)*2.0*pi*3.0)/dt)
@@ -20,7 +25,7 @@ print(enc.read_counters())
 t1=time.time()
 t2=t1
 total_clicks=2**12
-speed=40.0
+speed=00.0
 clicks=0;
 P=0.5
 I=1
@@ -33,22 +38,22 @@ dt=0.01
 s_left=+0
 s_right=+0
 
-pid_angle=PID(P=1,I=0,D=0,Angle=True)
-setangle=90
-
+pid_angle=PID(P=10,I=0,D=2,Angle=True)
+setangle=-90
+pid_angle.setPoint(setangle)
 while clicks<total_clicks: 
-  t1=time.time()
+  t1=time.clock()
   c1,c2=enc.read_counters()
   RealAngle = bno.read_euler()[0]
   speed_left=copysign(calc_speed(c2,dt),s_left)
   speed_right=copysign(calc_speed(c1,dt),s_right)
   clicks+=c1
-  t2=time.time()-t1
   rot_speed=pid_angle.update(RealAngle)
+  t2=time.clock()-t1
   s_left=pid_left.update(speed_left)
   s_right=pid_right.update(speed_right)
   driveMotors.set_speed([s_right-rot_speed, s_left+rot_speed])
-  print(speed_left,speed_right)
-  time.sleep(dt-t2)
-  
+  print(speed_left,speed_right,RealAngle)
+  wiringpi.delayMicroseconds(int((dt-t2)*1e6))
+
 driveMotors.set_speed([0, 0])
