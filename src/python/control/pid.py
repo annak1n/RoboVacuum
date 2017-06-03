@@ -12,16 +12,17 @@
 #
 #
 
-
+from math import pi
 def GetAngleDifference(A, B):
     '''
 
     '''
-    difference = A - B
-    while difference < -180:
-        difference += 360
-    while difference > 180:
-        difference -= 360
+    difference = min(A - B,A - B -pi,A - B +pi,key=abs)
+    '''while difference < -pi:
+        difference += 2.0*pi
+    while difference > pi:
+        difference -= 2.0*pi
+    '''
     return difference
 
 

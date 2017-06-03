@@ -58,14 +58,14 @@ class Robot(object):
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]
         self.OdoAngle=0
-        self.pid_angle = PID(I=0, P=1, D=0.0, Angle=True)
-        self.pid_motors=[PID(P=0.5,I=1,D=0),PID(P=0.5,I=1,D=0)]
+        self.pid_angle = PID(I=.005, P=1.0, D=0.00005, Angle=True)
+        self.pid_motors=[PID(P=1.0,I=1.0,D=0),PID(P=1.0,I=1.0,D=0)]
         self.rotEncode = encoder.WheelEncoder()
-        self.bodyRadius = 32/2  # cm
+        self.bodyRadius = 32.0/2.0  # cm
         self.wheelRadius = 3  # cm need to check
         self.wheelCircumference = self.wheelRadius*2*pi
         self.wheel2wheel = 26.5 
-        self.weight = 5
+        self.weight = 5.0
         self.Wheel2RoboCsys=np.zeros((3,2))
         self.Wheel2RoboCsys[0,1]=0.5*self.wheelRadius
         self.Wheel2RoboCsys[0,0]=0.5*self.wheelRadius
@@ -77,7 +77,7 @@ class Robot(object):
         self.RoboCsys2Wheel[0,2]=(0.5*self.wheel2wheel)/self.wheelRadius
         self.RoboCsys2Wheel[1,2]=-(0.5*self.wheel2wheel)/self.wheelRadius
 
-        self.MCfrequency=100 #motor control frequency in hertz
+        self.MCfrequency=100.0 #motor control frequency in hertz
         self.clickPerRotation=1/1024 #rotary encoder clicks per rotation stored as invert to speed calc time
 
         self.route=[]
@@ -101,6 +101,7 @@ class Robot(object):
         
         self.controlerWS=np.zeros(2)
         self.clicks=np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS)
+        print(self.clicks)
         self.wheelSpeeds=self.clicks*self.clickPerRotation*self.wheelCircumference*self.MCfrequency
         c=cos(self.position[2])
         s=sin(self.position[2])
@@ -110,36 +111,39 @@ class Robot(object):
         self.rotation[0,1]=s
         velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.clicks)
         self.position+=dt*velocity
-
+        if self.position[2]>2*pi:
+          self.position-=2*pi
+        elif self.position[2]<-2*pi:
+          self.position+=2*pi
+        #print(self.position)
         
         
     def setSpeedAngle(self, a):
         '''FUnction which is used to spawn the motor control thread
 
         '''
-        dt=1/self.MCfrequency
+        dt=1.0/self.MCfrequency #the time step of one cycle
         old_time=time.clock()
         wiringpi.delayMicroseconds(int((dt*1e6)))
-        time.sleep(0.5)
-        self.decodeSpeeds(dt)
+        self.decodeSpeeds(dt) #this resets the encoders to zero to remove any initial errors
         time.sleep(0.01)
-        while self.sema == True:
-            if  self.distanceRST:
-              self.SegDistance=0
-              self.distanceRST=False
-              
-            self.decodeSpeeds(dt) #method for decoding the speeds
+        while self.sema == True: #the sema allows the threads to be closed by another process              
+            self.decodeSpeeds(dt) #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             
-            self.RealAngle = self.bno.read_euler()[0]
+            self.RealAngle = self.bno.read_euler()[0] #get gyroscope angle
+            self.controlerWS[0]=self.pid_motors[0].update(self.wheelSpeeds[0])
+            self.controlerWS[1]=self.pid_motors[1].update(self.wheelSpeeds[1])
 
-            for i in range(2):
-                self.controlerWS[i]=self.pid_motors[i].update(self.wheelSpeeds[i])
-
-            self.driveMotors.set_speed(self.controlerWS)
+                
+            self.driveMotors.set_speed(self.controlerWS) #set the motor speed based upon the PID
             new_time=time.clock()
-            wiringpi.delayMicroseconds(int((dt-(new_time-old_time))*1e6))
+            sleep=int((dt-(new_time-old_time))*1e6)
+            if sleep>0:
+              wiringpi.delayMicroseconds(sleep)
+            else:
+              dt=new_time-old_time #should this lag the dt can be adapted
             old_time=new_time
-        self.driveMotors.set_speed([0, 0])
+        self.driveMotors.set_speed([0, 0]) #set motors to zero on exit
         exit()
 
     def collisionDetection(self,a):
@@ -178,14 +182,16 @@ class Robot(object):
         
         self.pid_angle.setPoint(angle)
         velocity=np.zeros(3)
-        error=100
+        self.pid_angle.error=100
         self.RoboCsys2Wheel
-        limit=1/60
-        while error>limit:
-            temp=self.position
-            error=temp[2]-angle
-            velocity[2]=self.pid_angle.update(error)
-            self.RoboCsys2Wheel.dot(velocity)
+        limit=(2*pi)/180
+        while abs(self.pid_angle.error)>limit:
+            print(180*self.position[2]/pi)
+            velocity[2]=self.pid_angle.update(self.position[2])
+            temp2=self.RoboCsys2Wheel.dot(velocity)
+            self.pid_motors[0].setPoint(temp2[0])
+            self.pid_motors[1].setPoint(temp2[1])
+            time.sleep(0.05)
             
 
     def begin(self):
