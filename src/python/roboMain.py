@@ -54,17 +54,17 @@ class Robot(object):
         
         self.distance = DM.distanceMeas(calibrationFile='calibration_data.db')
         self.minDistance=7.5 #distance at which robot stops from wall
-        
+        self.dist=0
         self.speed = 0
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]
         self.OdoAngle=0
         self.pid_angle = PID(I=.005, P=1.0, D=0.00005, Angle=True)
-        self.pid_motors=[PID(P=1.0,I=1.0,D=0),PID(P=1.0,I=1.0,D=0)]
+        self.pid_motors=[PID(P=0.0,I=0.5,D=0),PID(P=0.0,I=0.5,D=0)]
         self.rotEncode = encoder.WheelEncoder()
         self.bodyRadius = 32.0/2.0  # cm
         self.wheelRadius = 3  # cm need to check
-        self.wheelCircumference = self.wheelRadius*2*pi
+        self.wheelCircumference = self.wheelRadius*2.0*pi
         self.wheel2wheel = 26.5 
         self.weight = 5.0
         self.Wheel2RoboCsys=np.zeros((3,2))
@@ -78,13 +78,10 @@ class Robot(object):
         self.RoboCsys2Wheel[0,2]=(0.5*self.wheel2wheel)/self.wheelRadius
         self.RoboCsys2Wheel[1,2]=-(0.5*self.wheel2wheel)/self.wheelRadius
 
-        self.MCfrequency=100.0 #motor control frequency in hertz
-        self.clickPerRotation=1/1024 #rotary encoder clicks per rotation stored as invert to speed calc time
+        self.MCfrequency=75.0 #motor control frequency in hertz
+        self.clickPerRotation=1.0/1024.0 #rotary encoder clicks per rotation stored as invert to speed calc time
 
-        self.route=[]
-        self.SegDistance=0
-        self.distanceRST=False
-        self.OdoAngle
+
         #inter thread commincation variables
         self.sema=False #Lets all threads know that master thread is online (when true)
         self.stopDistance=False
@@ -92,32 +89,34 @@ class Robot(object):
         self.rotation=np.zeros((3,3))
         self.position=np.zeros(3)
         self.rotation[2,2]=1
-
+      
         self.wheelSpeeds=np.zeros(2)
         self.controlerWS=np.zeros(2)
         self.papirus = Papirus(rotation = 0)
-        self.screen=PIL.Image.new(1,(174,164))
-        self.midScreen=np.array([174/2,164/2,0])
+        self.screen=PIL.Image.new("1",(self.papirus.width,self.papirus.height),"white")
+        self.midScreen=np.array([self.papirus.width/2,self.papirus.height/2,0])
 
     def decodeSpeeds(self,dt):
         '''Function for converting the encoder output to wheel velocities 
         '''
         
-        self.controlerWS=np.zeros(2)
+        
         self.clicks=np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS)
-        print(self.clicks)
+        #print(self.clicks)
         self.wheelSpeeds=self.clicks*self.clickPerRotation*self.wheelCircumference*self.MCfrequency
+        #print("e: ",self.wheelSpeeds)
         c=cos(self.position[2])
         s=sin(self.position[2])
         self.rotation[0,0]=c
         self.rotation[1,1]=c
         self.rotation[1,0]=-s
         self.rotation[0,1]=s
-        velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.clicks)
+        velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
+        #print(self.wheelSpeeds)
         self.position+=dt*velocity
         if self.position[2]>2*pi:
           self.position-=2*pi
-        elif self.position[2]<-2*pi:
+        elif self.position[2]<0:
           self.position+=2*pi
         #print(self.position)
         
@@ -134,11 +133,13 @@ class Robot(object):
         while self.sema == True: #the sema allows the threads to be closed by another process              
             self.decodeSpeeds(dt) #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             
-            self.RealAngle = self.bno.read_euler()[0] #get gyroscope angle
+            self.RealAngle = pi*self.bno.read_euler()[0]/180 #get gyroscope angle
             self.controlerWS[0]=self.pid_motors[0].update(self.wheelSpeeds[0])
             self.controlerWS[1]=self.pid_motors[1].update(self.wheelSpeeds[1])
-
-                
+            self.dist=self.distance.getDistance()
+            print(self.RealAngle-self.position[2])
+            #print(180*self.position[2]/pi)
+            #print("c: " ,self.controlerWS,self.pid_motors[0].set_point,self.pid_motors[1].set_point)
             self.driveMotors.set_speed(self.controlerWS) #set the motor speed based upon the PID
             new_time=time.clock()
             sleep=int((dt-(new_time-old_time))*1e6)
@@ -203,21 +204,26 @@ class Robot(object):
         self.sema = True
         print("starting guidance")
         self.guidence = thread.start_new_thread(self.setSpeedAngle, (1,))
+        #self.mapping = thread.start_new_thread(self.logDistance, (1,))
         #self.collision=thread.start_new_thread(self.collisionDetection,(1,))
         print("gidance thread initiated")
     
-    def logDistance(self):
-        dist_vect=np.zeros(3)
-        self.distLOG=[]
-        
+    def logDistance(self,a):
+        dist_vect=np.zeros(3) 
+        t=time.time()       
         while self.sema:
-            dist_vect[0]=self.bodyRadius+self.distance.getDistance()
-            coord=self.midScreen+self.rotation.dot(dist_vect).around()
+            time.sleep(0.05)
+            dist_vect[0]=self.bodyRadius+self.dist
+            coord=self.midScreen+np.around(self.rotation.dot(dist_vect))
             if coord[0]>0 and coord[0] <174 and coord[1]>0 and coord[1]<164:
-                self.screen[coords[0],coords[1]]=1
-        
-        self.papirus.display(bw)
-
+                self.screen.putpixel((int(coord[0]),int(coord[1])),0)
+                #print(coord[0],coord[1])
+            if (time.time()-t)>5:
+              t=time.time()
+              self.papirus.display(self.screen)
+              self.papirus.update()
+        self.papirus.display(self.screen)
+        print("mapping done")
         self.papirus.update()
 
     def patternMove(self):
@@ -271,12 +277,3 @@ class Robot(object):
         worker = thread.start_new_thread(
             self.brushMotors.set_speed, ([0, 0, 0],))
 
-    def calculateJacobian(self):
-        ca = cos(radians(self.RealAngle))
-        sa = sin(radians(self.RealAngle))
-        self.Jacobian[0, :] = 0.5 * self.bodyRadius * ca
-        self.Jacobian[1, :] = 0.5 * self.bodyRadius * sa
-    
-    def updatePosition(self,dS,dTheta):
-        A=np.array([cos(self.RealAngle), 0],[sin(self.RealAngle), 0],[0, 1])
-        self.position+=A.multiply([[dS],[dTheta]])
