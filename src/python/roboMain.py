@@ -60,7 +60,10 @@ class Robot(object):
         self.RealAngle = self.bno.read_euler()[0]
         self.OdoAngle=0
         self.pid_angle = PID(I=.005, P=1.0, D=0.00005, Angle=True)
-        self.pid_motors=[PID(P=0.0,I=0.5,D=0),PID(P=0.0,I=0.5,D=0)]
+        P=4.0*.6 
+        I=0.5
+        D=0.01
+        self.pid_motors=[PID(P=P,I=I,D=D),PID(P=P,I=I,D=D)]
         self.rotEncode = encoder.WheelEncoder()
         self.bodyRadius = 32.0/2.0  # cm
         self.wheelRadius = 3  # cm need to check
@@ -78,7 +81,7 @@ class Robot(object):
         self.RoboCsys2Wheel[0,2]=(0.5*self.wheel2wheel)/self.wheelRadius
         self.RoboCsys2Wheel[1,2]=-(0.5*self.wheel2wheel)/self.wheelRadius
 
-        self.MCfrequency=75.0 #motor control frequency in hertz
+        self.MCfrequency=100.0 #motor control frequency in hertz
         self.clickPerRotation=1.0/1024.0 #rotary encoder clicks per rotation stored as invert to speed calc time
 
 
@@ -107,19 +110,17 @@ class Robot(object):
         #print(self.clicks)
         self.wheelSpeeds=self.clicks*self.clickPerRotation*self.wheelCircumference*self.MCfrequency
         #print("e: ",self.wheelSpeeds)
-        c=cos(self.position[2])
-        s=sin(self.position[2])
+        c=cos(self.RealAngle)
+        s=sin(self.RealAngle)
         self.rotation[0,0]=c
         self.rotation[1,1]=c
         self.rotation[1,0]=-s
         self.rotation[0,1]=s
         velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
         #print(self.wheelSpeeds)
+        #velocity[2]/=3.162
         self.position+=dt*velocity
-        if self.position[2]>2*pi:
-          self.position-=2*pi
-        elif self.position[2]<0:
-          self.position+=2*pi
+        self.position[2]=self.RealAngle
         #print(self.position)
         
         
@@ -132,6 +133,7 @@ class Robot(object):
         wiringpi.delayMicroseconds(int((dt*1e6)))
         self.decodeSpeeds(dt) #this resets the encoders to zero to remove any initial errors
         time.sleep(0.01)
+        self.position[:]=0
         while self.sema == True: #the sema allows the threads to be closed by another process              
             self.decodeSpeeds(dt) #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             
@@ -139,7 +141,7 @@ class Robot(object):
             self.controlerWS[0]=self.pid_motors[0].update(self.wheelSpeeds[0])
             self.controlerWS[1]=self.pid_motors[1].update(self.wheelSpeeds[1])
             self.dist=self.distance.getDistance()
-            print(self.RealAngle-self.position[2])
+            #print(self.RealAngle-180*self.position[2]/pi)
             #print(180*self.position[2]/pi)
             #print("c: " ,self.controlerWS,self.pid_motors[0].set_point,self.pid_motors[1].set_point)
             self.driveMotors.set_speed(self.controlerWS) #set the motor speed based upon the PID
