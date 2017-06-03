@@ -106,7 +106,7 @@ class Robot(object):
         self.controlerWS=np.zeros(2)
         self.clicks=np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS)
         print(self.clicks)
-        self.wheelSpeeds=self.clicks*self.clickPerRotation*self.wheelCircumference*self.MCfrequency
+        self.wheelSpeeds=self.clicks*self.clickPerRotation*self.wheelCircumference*self.MCfrequency        
         c=cos(self.position[2])
         s=sin(self.position[2])
         self.rotation[0,0]=c
@@ -199,7 +199,6 @@ class Robot(object):
             
 
     def begin(self):
-        print("starting guidance")
         self.sema = True
         print("starting guidance")
         self.guidence = thread.start_new_thread(self.setSpeedAngle, (1,))
