@@ -56,11 +56,11 @@ class WheelEncoder:
 	# Start by sending a guard pulse, then read the two 16 bit counter
 	# values onee after the other
 
-	def read_counters(self):
+	def read_counters(self,counts):
 		self.__guard_pulse()	
-		c1 = self.__read_16()
-		c2 = self.__read_16()
-		return (c1,c2)
+		counts[0] = float(self.__read_16())
+		counts[1] = float(self.__read_16())
+		return (counts)
 
 
 # Example usage 

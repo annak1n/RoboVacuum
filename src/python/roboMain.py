@@ -21,10 +21,8 @@ import wiringpi
 
 
 
-def calc_speed(clicks,dt):
-      distance=(((float(clicks)/1024.0)*2.0*pi*3.0))
-      return(distance/dt),distance
-      
+
+
 
 
 
@@ -54,27 +52,34 @@ class Robot(object):
             
         
         self.distance = DM.distanceMeas(calibrationFile='calibration_data.db')
-        self.minDistance=7.5 #dustance at which robot stops from wall
+        self.minDistance=7.5 #distance at which robot stops from wall
         
         self.speed = 0
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]
         self.OdoAngle=0
-        self.pid_angle = PID(I=0, P=15, D=0.0, Angle=True)
-        self.pid_left=PID(P=0.5,I=1,D=0)
-        self.pid_right=PID(P=0.5,I=1,D=0) 
-        self.theta = np.zeros(2)
-        self.position = np.zeros(3)
-        self.theta_dot = np.zeros(2)
-        self.Jacobian = np.zeros((3, 2))
+        self.pid_angle = PID(I=0, P=1, D=0.0, Angle=True)
+        self.pid_motors=[PID(P=0.5,I=1,D=0),PID(P=0.5,I=1,D=0)]
         self.rotEncode = encoder.WheelEncoder()
-        self.bodyRadius = 32  # cm
+        self.bodyRadius = 32/2  # cm
         self.wheelRadius = 3  # cm need to check
+        self.wheelCircumference = self.wheelRadius*2*pi
         self.wheel2wheel = 26.5 
         self.weight = 5
-        self.Jacobian[2, 0] = 0.5 * self.bodyRadius / self.wheelRadius
-        self.Jacobian[2, 1] = -self.Jacobian[2, 0]
-        self.temp=0
+        self.Wheel2RoboCsys=np.zeros((3,2))
+        self.Wheel2RoboCsys[0,1]=0.5*self.wheelRadius
+        self.Wheel2RoboCsys[0,0]=0.5*self.wheelRadius
+        self.Wheel2RoboCsys[2,0]=0.5*(self.wheelRadius/(0.5*self.wheel2wheel))
+        self.Wheel2RoboCsys[2,0]=-0.5*(self.wheelRadius/(0.5*self.wheel2wheel))
+        self.RoboCsys2Wheel=np.zeros((2,3))
+        self.RoboCsys2Wheel[0,0]=1/self.wheelRadius
+        self.RoboCsys2Wheel[1,0]=1/self.wheelRadius
+        self.RoboCsys2Wheel[0,2]=(0.5*self.wheel2wheel)/self.wheelRadius
+        self.RoboCsys2Wheel[1,2]=-(0.5*self.wheel2wheel)/self.wheelRadius
+
+        self.MCfrequency=100 #motor control frequency in hertz
+        self.clickPerRotation=1/1024 #rotary encoder clicks per rotation stored as invert to speed calc time
+
         self.route=[]
         self.SegDistance=0
         self.distanceRST=False
@@ -82,53 +87,57 @@ class Robot(object):
         #inter thread commincation variables
         self.sema=False #Lets all threads know that master thread is online (when true)
         self.stopDistance=False
+        self.clicks= np.zeros(2)
+        self.rotation=np.zeros((3,3))
+        self.position=np.zeros(3)
+        self.rotation[2,2]=1
+
+        self.wheelSpeeds=np.zeros(2)
+        self.controlerWS=np.zeros(2)
+
+    def decodeSpeeds(self,dt):
+        '''Function for converting the encoder output to wheel velocities 
+        '''
+        
+        self.controlerWS=np.zeros(2)
+        self.clicks=np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS)
+        self.wheelSpeeds=self.clicks*self.clickPerRotation*self.wheelCircumference*self.MCfrequency
+        c=cos(self.position[2])
+        s=sin(self.position[2])
+        self.rotation[0,0]=c
+        self.rotation[1,1]=c
+        self.rotation[1,0]=-s
+        self.rotation[0,1]=s
+        velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.clicks)
+        self.position+=dt*velocity
+
         
         
     def setSpeedAngle(self, a):
         '''FUnction which is used to spawn the motor control thread
 
         '''
-        dt=0.01
+        dt=1/self.MCfrequency
         old_time=time.clock()
-        wiringpi.delayMicroseconds(int((0.01)*1e6))
-        s_left=+0
-        s_right=+0
-        self.driveMotors.set_speed([25, 25])
+        wiringpi.delayMicroseconds(int((dt*1e6)))
         time.sleep(0.5)
-        enc1,enc2=self.rotEncode.read_counters()
-        self.SegDistance=0
+        self.decodeSpeeds(dt)
+        time.sleep(0.01)
         while self.sema == True:
             if  self.distanceRST:
               self.SegDistance=0
               self.distanceRST=False
-            enc1,enc2=self.rotEncode.read_counters()
+              
+            self.decodeSpeeds(dt) #method for decoding the speeds
             
             self.RealAngle = self.bno.read_euler()[0]
-            err_angle = self.pid_angle.update(self.RealAngle)
-            if abs(err_angle)>127:
-              err_angle=copysign(127,err_angle)
-            abs_speed_left,distance_left=calc_speed(enc2,dt)
-            distance_left=copysign(distance_left,s_left)
-            self.speed_left=copysign(abs_speed_left,s_left) #as the encoder has no knowledge of direction the sign of the pervious motor signal is used to determine direction
-            
-            abs_speed_right,distance_right=calc_speed(enc1,dt)
-            distance_right=copysign(distance_right,s_right)
-            self.OdoAngle+=180*((distance_right-distance_left)/self.wheel2wheel)/pi
-            self.speed_right=copysign(abs_speed_right,s_right) #copysign(?
-            if abs(self.pid_left.set_point)>0.01:
-              s_left=self.pid_left.update(self.speed_left)
-            else:
-              s_left=0
-            if abs(self.pid_right.set_point)>0.01:
-              s_right=self.pid_right.update(self.speed_right)
-            else:
-              s_right=0
-            self.SegDistance+=0.5*(distance_left+distance_right)
-            #print(self.SegDistance)
-            #print("angle: ", err_angle, s_right, s_left,enc1,enc2)
-            self.driveMotors.set_speed([s_right-err_angle, s_left+err_angle])
+
+            for i in range(2):
+                self.controlerWS[i]=self.pid_motors[i].update(self.wheelSpeeds[i])
+
+            self.driveMotors.set_speed(self.controlerWS)
             new_time=time.clock()
-            wiringpi.delayMicroseconds(int((new_time-old_time)*1e6))
+            wiringpi.delayMicroseconds(int((dt-(new_time-old_time))*1e6))
             old_time=new_time
         self.driveMotors.set_speed([0, 0])
         exit()
@@ -165,7 +174,19 @@ class Robot(object):
         self.setAngle = setAngle
         self.pid_angle.setPoint(self.setAngle)
 
-
+    def turnToAngle(self,angle):
+        
+        self.pid_angle.setPoint(angle)
+        velocity=np.zeros(3)
+        error=100
+        self.RoboCsys2Wheel
+        limit=1/60
+        while error>limit:
+            temp=self.position
+            error=temp[2]-angle
+            velocity[2]=self.pid_angle.update(error)
+            self.RoboCsys2Wheel.dot(velocity)
+            
 
     def begin(self):
         print("starting guidance")
@@ -175,25 +196,6 @@ class Robot(object):
         #self.collision=thread.start_new_thread(self.collisionDetection,(1,))
         print("gidance thread initiated")
 
-    def here_to_there(self,B,speed):
- 
-        dist=np.linalg.norm(B)
-        angle=180*atan2(B[1],B[0])/pi
-        print(angle)
-        self.updateSpeedAngle(0,angle)
-        print(self.pid_angle.error)
-        while abs(self.pid_angle.error)>5:
-            print('mis-aligned')
-            time.sleep(0.1)
-        time.sleep(1)
-        t = dist/speed
-        print(self.pid_angle.error)
-        self.updateSpeedAngle(speed,angle)
-        time.sleep(t)
-        print(t)
-        self.updateSpeedAngle(0,0)
-        time.sleep(1)
-        return True
         
     def patternMove(self):
         angle=0

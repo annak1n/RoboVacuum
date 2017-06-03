@@ -13,7 +13,7 @@ r = Robot()
 
 r.begin()
 #r.startBrush()
-r.patternMove()
-
+#r.patternMove()
+r.turnToAngle(3.14/2)
 
 r.stop()
