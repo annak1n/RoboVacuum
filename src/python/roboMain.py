@@ -5,7 +5,8 @@ import os
 import tty
 import sys
 import select
-from papirus import PapirusText
+from papirus import Papirus
+import PIL
 import Queue
 #from threading import Thread
 import thread
@@ -94,6 +95,9 @@ class Robot(object):
 
         self.wheelSpeeds=np.zeros(2)
         self.controlerWS=np.zeros(2)
+        self.papirus = Papirus(rotation = 0)
+        self.screen=PIL.Image.new(1,(174,164))
+        self.midScreen=[174/2,164/2]
 
     def decodeSpeeds(self,dt):
         '''Function for converting the encoder output to wheel velocities 
@@ -201,8 +205,20 @@ class Robot(object):
         self.guidence = thread.start_new_thread(self.setSpeedAngle, (1,))
         #self.collision=thread.start_new_thread(self.collisionDetection,(1,))
         print("gidance thread initiated")
-
+    
+    def logDistance(self):
+        dist_vect=np.zeros(3)
+        self.distLOG=[]
+        while self.sema:
+            dist_vect[0]=self.distance.getDistance()
+            coord=self.rotation.dot(dist_vect).around()
+            if coord[0]>0 and coord[0] <174 and coord[1]>0 and coord[1]<164:
+                self.screen[coords[0],coords[1]]=1
         
+        self.papirus.display(bw)
+
+        self.papirus.update()
+
     def patternMove(self):
         angle=0
         delta=90

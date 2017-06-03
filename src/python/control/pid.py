@@ -17,7 +17,7 @@ def GetAngleDifference(A, B):
     '''
 
     '''
-    difference = min(A - B,A - B -pi,A - B +pi,key=abs)
+    difference = min(A - B,2*pi -A + B,key=abs)
     '''while difference < -pi:
         difference += 2.0*pi
     while difference > pi:
