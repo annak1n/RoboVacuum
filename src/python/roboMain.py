@@ -97,7 +97,7 @@ class Robot(object):
         self.controlerWS=np.zeros(2)
         self.papirus = Papirus(rotation = 0)
         self.screen=PIL.Image.new(1,(174,164))
-        self.midScreen=[174/2,164/2]
+        self.midScreen=np.array([174/2,164/2,0])
 
     def decodeSpeeds(self,dt):
         '''Function for converting the encoder output to wheel velocities 
@@ -209,9 +209,10 @@ class Robot(object):
     def logDistance(self):
         dist_vect=np.zeros(3)
         self.distLOG=[]
+        
         while self.sema:
-            dist_vect[0]=self.distance.getDistance()
-            coord=self.rotation.dot(dist_vect).around()
+            dist_vect[0]=self.bodyRadius+self.distance.getDistance()
+            coord=self.midScreen+self.rotation.dot(dist_vect).around()
             if coord[0]>0 and coord[0] <174 and coord[1]>0 and coord[1]<164:
                 self.screen[coords[0],coords[1]]=1
         
