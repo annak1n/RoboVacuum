@@ -52,9 +52,9 @@ class Robot(object):
             calibrationFile='calibration_data_A.db')
             
         
-        self.distance = DM.distanceMeas(calibrationFile='calibration_data.db')
+        self.distanceSensor = DM.distanceMeas(calibrationFile='calibration_data.db')
         self.minDistance=7.5 #distance at which robot stops from wall
-        self.dist=0
+        self.distance=0
         self.speed = 0
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]
@@ -140,7 +140,9 @@ class Robot(object):
             self.RealAngle = pi*self.bno.read_euler()[0]/180 #get gyroscope angle
             self.controlerWS[0]=self.pid_motors[0].update(self.wheelSpeeds[0])
             self.controlerWS[1]=self.pid_motors[1].update(self.wheelSpeeds[1])
-            self.dist=self.distance.getDistance()
+            self.distance=self.distanceSensor.getDistance()
+            if isnan(self.distance):
+                dm=120
             #print(self.RealAngle-180*self.position[2]/pi)
             #print(180*self.position[2]/pi)
             #print("c: " ,self.controlerWS,self.pid_motors[0].set_point,self.pid_motors[1].set_point)
@@ -161,7 +163,7 @@ class Robot(object):
         '''The distance detection in loop, this sets a semaphore flag for the motors forward variable to be overwritten
         
         '''
-        dm = 15#self.distance.getDistance()
+        dm = 15#self.distanceSensor.getDistance()
         if isnan(dm)==False:
             if self.minDistance> dm:
               self.stopDistance=True
@@ -216,7 +218,7 @@ class Robot(object):
         t=time.time()       
         while self.sema:
             time.sleep(0.05)
-            dist_vect[0]=self.bodyRadius+self.dist
+            dist_vect[0]=self.bodyRadius+self.distance
             coord=self.midScreen+np.around(self.rotation.dot(dist_vect))
             if coord[0]>0 and coord[0] <174 and coord[1]>0 and coord[1]<164:
                 self.screen.putpixel((int(coord[0]),int(coord[1])),0)
@@ -231,42 +233,29 @@ class Robot(object):
 
     def patternMove(self):
         angle=0
-        delta=90
+        delta=pi/2
+        startpos=self.position
         while True:
-          self.distanceRST=True
           self.updateSpeedAngle(0,angle)
           time.sleep(2)
-          self.distanceRST=True
-          time.sleep(1)
-          self.updateSpeedAngle(50,angle)
-          dm = self.distance.getDistance()
-          if isnan(dm):
-            dm=120
-          while dm >10:
-            dm = self.distance.getDistance()
-            if isnan(dm):
-              dm=120
-            time.sleep(0.01)
+          self.updateSpeedAngle(20,angle)
+        
+ 
+          while self.distance >5:
+            time.sleep(0.1)
           self.updateSpeedAngle(0,angle+delta)
           time.sleep(2)
-          self.distanceRST=True
-          time.sleep(1)
+          startpos=self.position[1:2]
           self.updateSpeedAngle(50,angle+delta)
-          t=time.clock()
-          dm=100
-          while dm >10 and self.SegDistance<15:
-            dm = self.distance.getDistance()
-            #print(dm,time.clock()-t)
-            if isnan(dm):
-              dm=120
-            time.sleep(0.01)
+          while np.linalg.norm(self.position[1:2]-startpos)<10 and self.distance>5:
+            time.sleep(0.1)
           
-          if angle==0:
-              angle=180
-              delta=-90
+          if abs(angle)<0.001:
+              angle=pi
+              delta=-pi/2
           else:
               angle=0
-              delta=90
+              delta=pi/2
           
 
     def stop(self):
