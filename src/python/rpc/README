@@ -38,7 +38,7 @@ So what are all these files ?
 These files are placeholders for user application code, they simply create an RPC server 
 and then (with the exception of core0.py) do nothing for now.
 
-core0.py additionally by way of example invoked the method foo() belonging to class MyClass by requesting it to
+core0.py additionally by way of example invokes the method foo() belonging to class MyClass by requesting it to
 be run on core 3.
 
 2. test.py
@@ -50,9 +50,9 @@ This is the RPC server
 4. netstring.py
 This is an implementation of netstring that I got from somewhere on the net
 
-5. lauch.sh
-This is a script that lauches the four main application programs (core0 tpo core3.py)
-it used taskset -c <core> to ensure that each is run on a particular core.
+5. launch.sh
+This is a script that lauches the four main application programs (core0 - core3.py)
+it uses taskset -c <core> to ensure that each is run on a particular core.
 THIS BIT IS IMPORTANT
 
 
