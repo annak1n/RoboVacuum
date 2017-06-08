@@ -1,34 +1,37 @@
-This is a first cut at an RPC server to let python code invoke class methods on other othe CPU cores.
+This is a first cut at an RPC server to let python code invoke class methods on other CPU cores.
 
-On initialization, user code must create a server instance on each core. 
-At start up the server opens a TCP connection to each of its peers. 
-Client code uses these connections to convey RPC requests between the CPU cores.
+On initialization, user code must create a server instance on each core. At start up the server 
+opens a TCP connection to each of its peers.  Client code uses these connections to convey RPC 
+requests between the CPU cores.
 
 The server is a python thread which is spawned by the constructor of the server class.
 
-The user must add explicit imports in the file rpcserver.py to define the classes that can be accessed on remore cores.
-The example given is a class called MyClass with a method foo(), this is defined in the file test.py
-and is explicitly imported in the file rpcserver.py by line "from test import MyClass"
+The user must add explicit imports in the file rpcserver.py to define the classes that can be 
+accessed on remote cores. The example given is a class called MyClass with a method foo(), this
+ is defined in the file test.py and is explicitly imported in the file rpcserver.py by line 
+"from test import MyClass"
 
-An RPC is represented as a dict that contains the module name, the function name and any
+An RPC is represented as a dict that contains: the module name, the function name, and any 
 parameters that should be passed to the function.
 
+For transit through the TCP connnection the dict is converted to a JSON string, and this is in 
+turn wrapped in a netstring encoding. The netsting coding simply prepends a header that specifies 
+the length of the JSON payload and makes it easier for the server to extract discreet messages 
+when receiving. The netstring coding is useful since multiple clients may be queueing RPC 
+requests to the same server.
 
-For transit through the TCP connnection the dict is converted to a JSON string, and this is inturn wrapped
-in a netstring encoding. The netsting coding simply prepends a header that specifies the length of the
-JSON payload and makes it easier for the server to extract discreet messages when receiving. This is useful
-when multiple cores may be queueing RPC requests to the same core at the same time.
+The server extracts the module name and function name from the decoded dict, and uses this to 
+obtain a reference to the actual function in order to invoked it. The dict is also passed to 
+the method in order that it can extract the passed parameters. 
 
-The server extracts the module name and function name from the decoded dict, and uses this to
-obtain a reference to the actual function in order to invoked it. The dict is also passed to the method
-in order that it can extract the passed parameters. 
+n.b. it is a constraint that all remote methods must accept their parameters via the dict. 
+The approach has the advantage of making the method parameters transparent to the server, since 
+the server needs only the module and function name, and only the method itself needs to know 
+about the specific parameters it accepts.
 
-n.b. it is a constraint that all remote methods must accept their parameters via the dict.
-The approach has the advantage of making the method parameters transparent to the server, since the server needs 
-only the module and function name, and only the method itself needs to know about the specific parameters it accepts.
-
-At the momment there is no mechanism to obtain a return value from a remote method.
-As a workaround it is possible to have a remote method callback a remote method which can update data/variables.
+At the momment there is no mechanism to obtain a return value from a remote method. 
+As a workaround it is possible to have a remote method callback a remote method which can 
+update data/variables.
 
 I expect to have a fully functional RPC with return value in a subsequent update.
 
@@ -38,8 +41,8 @@ So what are all these files ?
 These files are placeholders for user application code, they simply create an RPC server 
 and then (with the exception of core0.py) do nothing for now.
 
-core0.py additionally by way of example invokes the method foo() belonging to class MyClass by requesting it to
-be run on core 3.
+core0.py additionally by way of example invokes the method foo() belonging to class MyClass 
+and requests it to be run on core 3.
 
 2. test.py
 This contains the definition of MyClass
