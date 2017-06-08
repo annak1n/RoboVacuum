@@ -1,0 +1,60 @@
+This is a first cut at an RPC server to let pythod code invoke class methods on other othe CPU cores.
+
+It runs a server on each core, at start up each of the CPU cores starts an instance of the server and then 
+opens a TCP connection to each of its peers. Client code then uses these connections to convey RPC 
+requests between the CPU cores.
+
+The server is run as a python thread which is spawned by the server classes constructor, when the class
+is instansiated by user application code.
+
+The user must add explicit imports in rpcserver.py to define the classes that can be accessed on remore cores.
+The example given is a class called MyClass with a method foo(), this is defined in test.py
+and is explicitly imported in rpcserver.py by line "from test import MyClass"
+
+Those methods in a class that are to be accessed remotely accept parameters only via a dict.
+This enables methods with arbitrary parameter lists to handled transparently by the server, since it only
+has to pass the dict to the method, and only the method itself needs to know about the partcicular parameters it 
+is expecting.
+
+The RPC is represented as a dict that contains the module/class name, the function/method name and any
+parameters that should be passed to the function.
+
+For transit through the TCP connnection the dict is converted to a JSON string, and this is inturn wrapped
+in a netstring encoding. The netsting coding simply prepends a header that specifies the length of the
+JSON payload and makes it easier for the server to extract discreet messages when receiving. This is useful
+when multiple cores may be queueing RPC requests to the same core at the same time.
+
+At the momment there is no mechanism to obtain a return value from a remote method.
+As a workaround it is possible to have a remote itself method invoke a remote method which can update data/variables.
+
+I expect to have a fully functional RPC with return value in a subsequent update.
+
+So what are all these files ?
+
+1. core0.py, core1,py, core2.py, core3.py
+These files are placeholders for user application code, they simply create an RPC server 
+and then (with the exception of core0.py) do nothing for now.
+
+core0.py additionally by way of example invoked the method foo() belonging to class MyClass by requesting it to
+be run on core 3.
+
+2. test.py
+This contains the definition of MyClass
+
+3. rpcserver.py
+This is the RPC server
+
+4. netstring.py
+This is an implementation of netstring that I got from somewhere on the net
+
+5. lauch.sh
+This is a script that lauches the four main application programs (core0 tpo core3.py)
+it used taskset -c <core> to ensure that each is run on a particular core.
+THIS BIT IS IMPORTANT
+
+
+
+
+
+
+
