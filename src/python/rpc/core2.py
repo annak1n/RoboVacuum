@@ -7,7 +7,7 @@ rpc = RPC()
 
 # workload goes here
 while 1 :
-	print "doing nothing"
+	print "core ",rpc.getcore()," alive"
 	time.sleep(5)
 
 

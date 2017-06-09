@@ -7,7 +7,6 @@ from rpcserver import RPC
 rpc = RPC()
 
 
-
 # call a function on core number 3 
 # the function is defined in test.py
 
@@ -22,19 +21,23 @@ while 1 :
 	# invoke it on core 3
 	rpc.send( 3, msg )
 
-
-
-	# format a sync RPC request
-	msg["module"]	= "MyClass"
-	msg["function"]	= "rfoo"
-	msg["p1"] 	= 12345
+	time.sleep(1)
 
 	something = rpc.ssend(2, msg)
-
 	print "got retval", something
 
 
+	time.sleep(1)
+	
 	rpc.send(3,{"module":"MyClass","function":"foo","p1":1.0})
 
+	time.sleep(1)
 
-	print "got retval", rpc.ssend(0,{"module":"MyClass","function":"foo","p1":1.0})
+	something = rpc.ssend(0,{"module":"MyClass","function":"foo","p1":1.0})
+	print "got retval", something
+
+	time.sleep(1)
+
+	rpc.send(1,{"module":"MyClass","function":"poofoo","p1":255})
+
+	time.sleep(1)

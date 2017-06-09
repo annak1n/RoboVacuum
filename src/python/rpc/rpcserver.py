@@ -35,6 +35,7 @@ ASYNC_REQ = 0
 SYNC_REQ  = 1
 RETVAL    = 2		
 
+thisrpcserver = ''
 
 
 ####################################################
@@ -50,6 +51,11 @@ class RPC:
         # connects to servers on all the other cores in the core list
 	#########
 	def __init__(self) :
+
+		if globals()["thisrpcserver"] :
+			return
+
+		globals()["thisrpcserver"] = self
 
 		# discover which core I am running on
 		p = psutil.Process()
@@ -71,6 +77,7 @@ class RPC:
 					if e.errno == 111 :
 						print "core",thiscore,"waiting to connect to core ",c
 						time.sleep(1)
+
 
 	###
 	# send() - invoke an RPC on another core
@@ -136,7 +143,7 @@ class RPC:
 	###
 	# thiscore() - return the core number that the server is running on
 	#########
-	def thiscore(self) :
+	def getcore(self) :
 		return thiscore
 
 
