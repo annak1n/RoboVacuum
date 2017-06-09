@@ -11,8 +11,10 @@ accessed on remote cores. The example given is a class called MyClass with a met
  is defined in the file test.py and is explicitly imported in the file rpcserver.py by line 
 "from test import MyClass"
 
-An RPC is represented as a dict that contains: the module name, the function name, and any 
-parameters that should be passed to the function.
+An RPC is represented as a nested dict that contains: a header identifying the source and
+destination CPU core and the type of the message, and a nested  message body containing 
+the RPC request which identifies the module name, the function name, and any parameters that 
+should be passed to the function.
 
 For transit through the TCP connnection the dict is converted to a JSON string, and this is in 
 turn wrapped in a netstring encoding. The netsting coding simply prepends a header that specifies 
@@ -29,11 +31,6 @@ The approach has the advantage of making the method parameters transparent to th
 the server needs only the module and function name, and only the method itself needs to know 
 about the specific parameters it accepts.
 
-At the momment there is no mechanism to obtain a return value from a remote method. 
-As a workaround it is possible to have a remote method callback a remote method which can 
-update data/variables.
-
-I expect to have a fully functional RPC with return value in a subsequent update.
 
 So what are all these files ?
 
