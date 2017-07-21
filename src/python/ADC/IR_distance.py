@@ -11,7 +11,7 @@ import time
 class distanceMeas():
   
   
-  def __init__(self,add1=0x6A,add2=0x6B,channel=1,calibrationFile=False):
+  def __init__(self,add1=0x68,add2=0x69,channel=1,calibrationFile=False):
     i2c_helper = ABEHelpers()
     self.bus = i2c_helper.get_smbus()
     self.adc = ADCPi(self.bus, add1, add2, 12)
