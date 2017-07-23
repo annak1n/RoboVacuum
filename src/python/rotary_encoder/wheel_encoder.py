@@ -4,7 +4,7 @@ try:
 except RuntimeError:
 	print("Error importing RPi.GPIO - need root ?")
 
-
+import wiringpi
 
 # Wheel encoder class, there should only ever be one of these
 # in the system

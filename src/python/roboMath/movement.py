@@ -38,6 +38,7 @@ class calc:
         tempJ=np.array(self.J,copy=True)
         tempJ[0,:] *= cos(angle)
         tempJ[1,:] *= sin(angle)
+        print(tempJ)
         self.dX = tempJ.dot(dRho)
         self.X += self.dX*dt
 

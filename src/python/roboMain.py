@@ -11,7 +11,7 @@ import Queue
 #from threading import Thread
 import thread
 import numpy as np
-from control.pid import PID
+from control.pid import PID,GetAngleDifference
 from accelerometer.BNO055 import BNO055
 import ADC.IR_distance as DM
 from threading import Semaphore
@@ -62,7 +62,7 @@ class Robot(object):
         self.RealAngle = self.bno.read_euler()[0]
         self.OdoAngle=0
         self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True)
-        P=4.0*.6 
+        P=2
         I=0.5
         D=0.01
         self.pid_motors=[PID(P=P,I=I,D=D),PID(P=P,I=I,D=D)]
@@ -73,7 +73,7 @@ class Robot(object):
         self.wheel2wheel = 26.5 
         self.weight = 5.0
         self.velocity_desired=np.zeros(3)
-        self.MCfrequency=100.0 #motor control frequency in hertz
+        self.MCfrequency=50.0 #motor control frequency in hertz
         self.clickPerRotation=1.0/1024.0 #rotary encoder clicks per rotation stored as invert to speed calc time
         self.INS=calc(self.wheelRadius,self.bodyRadius)
 
@@ -81,9 +81,7 @@ class Robot(object):
         self.sema=False #Lets all threads know that master thread is online (when true)
         self.stopDistance=False
         self.clicks= np.zeros(2)
-        self.rotation=np.zeros((3,3))
-        self.position=np.zeros(3)
-        self.rotation[2,2]=1
+
       
         self.wheelSpeeds=np.zeros(2)
         self.controlerWS=np.zeros(2)
@@ -112,19 +110,21 @@ class Robot(object):
         wiringpi.delayMicroseconds(int((dt*1e6)))
         self.decodeSpeeds(dt) #this resets the encoders to zero to remove any initial errors
         time.sleep(0.01)
-        self.position[:]=0
         while self.sema == True: #the sema allows the threads to be closed by another process              
              #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             
-            self.RealAngle = pi*self.bno.read_euler()[0]/180 #get gyroscope angle
+            self.RealAngle = self.bno.read_euler()[0] #get gyroscope angle
               
             self.controlerWS[0]=self.pid_motors[0].update(self.wheelSpeeds[0])
             self.controlerWS[1]=self.pid_motors[1].update(self.wheelSpeeds[1])
             self.distance=self.distanceSensor.getDistance()
             if isnan(self.distance):
                 self.distance=120
-            #print(self.RealAngle-180*self.position[2]/pi)
-            #print(180*self.position[2]/pi)
+            self.INS.X[2]=GetAngleDifference(self.INS.X[2],0)
+            #print(self.RealAngle, 180*self.INS.X[2]/pi)
+            print(self.INS.dX)
+            print(self.clicks)
+            #print(self.wheelSpeeds)
             #print("c: " ,self.controlerWS,self.pid_motors[0].set_point,self.pid_motors[1].set_point)
             self.driveMotors.set_speed(self.controlerWS) #set the motor speed based upon the PID
             new_time=time.clock()
