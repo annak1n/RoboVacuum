@@ -35,7 +35,7 @@ class calc:
             The equation dX = J*dRho
         '''
         angle=self.X[2]
-        tempJ=self.J
+        tempJ=np.array(self.J,copy=True)
         tempJ[0,:] *= cos(angle)
         tempJ[1,:] *= sin(angle)
         self.dX = tempJ.dot(dRho)
@@ -47,9 +47,8 @@ class calc:
 
         '''
         angle=self.X[2]
-        tempJinv=self.Jinv
+        tempJinv=np.array(self.Jinv,copy=True)
         tempJinv[:,0] *= cos(angle)
         tempJinv[:,1] *= sin(angle)
         self.dRho = tempJinv.dot(dX)
-        Rho += self.dRho * dt
-        return(tempJinv.dot(dX))
+        self.Rho += self.dRho * dt
