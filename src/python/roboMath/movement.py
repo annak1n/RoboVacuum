@@ -1,6 +1,6 @@
 
 import numpy as np
-from math import sin,cos
+from math import sin,cos,pi
 
 class calc:
     '''Class to calculate the Global speeds etc. from the wheel rotations
@@ -16,19 +16,29 @@ class calc:
     '''
     def __init__(self, wheelRadius, wheel2wheel ):
 
+        self.WheelRadius = wheelRadius
+        self.ChassisWidth = wheel2wheel
+        self.CountsPerRotation=1024
         self.X = np.zeros(3)
         self.dX = np.zeros(3)
         self.Rho= np.zeros(3)
         self.dRho = np.zeros(2)
+        self.dV = np.zeros(2)
         self.J=np.zeros((3,2))
-        self.J[0,:]=0.5*wheelRadius
-        self.J[1,:]=0.5*wheelRadius
-        self.J[2,0]=(wheelRadius/(wheel2wheel))
-        self.J[2,1]=-(wheelRadius/(wheel2wheel))
+        self.J[0,:]=0.5*self.WheelRadius
+        self.J[1,:]=0.5*self.WheelRadius
+        self.J[2,0]=(self.WheelRadius/(self.ChassisWidth ))
+        self.J[2,1]=-(self.WheelRadius/(self.ChassisWidth ))
         self.Jinv=np.ones((2,3))
-        self.Jinv[0,2]=(0.25*wheel2wheel)
-        self.Jinv[1,2]=-(0.25*wheel2wheel)
-        self.Jinv *= 1/wheelRadius
+        self.Jinv[0,2]=(0.25*self.ChassisWidth )
+        self.Jinv[1,2]=-(0.25*self.ChassisWidth )
+        self.Jinv *= 1/self.WheelRadius
+
+    def rotWheels(self,counts,dt):
+        self.dRho=(counts/self.CountsPerRotation) * 2 * pi
+        self.dV = self.dRho * self.WheelRadius
+        self.deltaGlobalX(self.dRho,dt)
+
 
     def deltaGlobalX(self,dRho,dt):
         '''This method can be called to translate the wheel velocities to gloabal velocites

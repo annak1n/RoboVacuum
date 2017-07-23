@@ -11,6 +11,8 @@ import numpy as np
 
 r = Robot()
 
+r.papirus.update()
+
 r.begin()
 #r.startBrush()
 #r.patternMove()
@@ -23,5 +25,7 @@ r.logDistance(1)
 #self.controlerWS[0]=1
 #.controlerWS[1]=-1
 time.sleep(5)
+
 r.stop()
+r.papirus.update()
 print('End')

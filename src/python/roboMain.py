@@ -60,7 +60,6 @@ class Robot(object):
         self.speed = 0
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]
-        self.OdoAngle=0
         self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True)
         P=2
         I=0.5
@@ -68,19 +67,15 @@ class Robot(object):
         self.pid_motors=[PID(P=P,I=I,D=D),PID(P=P,I=I,D=D)]
         self.rotEncode = encoder.WheelEncoder()
         self.bodyRadius = 32.0*0.5  # cm
-        self.wheelRadius = 3.4  # cm need to check
-        self.wheelCircumference = self.wheelRadius*2.0*pi
-        self.wheel2wheel = 26.5 
         self.weight = 5.0
-        self.velocity_desired=np.zeros(3)
+
         self.MCfrequency=25.0 #motor control frequency in hertz
-        self.clickPerRotation=(2*pi)/1024.0 #rotary encoder clicks per rotation stored as invert to speed calc time
         self.INS=calc(self.wheelRadius,self.bodyRadius)
 
         #inter thread commincation variables
         self.sema=False #Lets all threads know that master thread is online (when true)
         self.stopDistance=False
-        self.clicks= np.zeros(2)
+
 
       
         self.wheelSpeedsLinear=np.zeros(2)
@@ -89,16 +84,6 @@ class Robot(object):
         self.papirus = Papirus(rotation = 0)
         self.screen=PIL.Image.new("1",(self.papirus.width,self.papirus.height),"white")
         self.midScreen=np.array([self.papirus.width/2,self.papirus.height/2])
-
-    def decodeSpeeds(self,dt):
-        '''Function for converting the encoder output to wheel velocities 
-        '''
-        
-        
-        self.clicks=np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS)
-      
-        self.wheelSpeedsAngular=2 * pi * (self.clicks*self.clickPerRotation)/dt
-        self.wheelSpeedsLinear = self.wheelSpeedsAngular*self.wheelRadius
         
         
     def controlMotors(self, a):
@@ -113,18 +98,18 @@ class Robot(object):
         time.sleep(0.01)
         while self.sema == True: #the sema allows the threads to be closed by another process              
              #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
-            self.decodeSpeeds(dt)
-            self.INS.deltaGlobalX(self.wheelSpeedsAngular,dt)
-            self.RealAngle = self.bno.read_euler()[0] #get gyroscope angle
+            #self.decodeSpeeds(dt)
+            self.INS.rotWheels(np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS),dt)
+            self.RealAngle = -self.bno.read_euler()[0] #get gyroscope angle
             
-            self.controlerWS[0]=self.pid_motors[0].update(self.wheelSpeedsLinear[0])
-            self.controlerWS[1]=self.pid_motors[1].update(self.wheelSpeedsLinear[1])
+            self.controlerWS[0]=self.pid_motors[0].update(self.INS.dV[0])
+            self.controlerWS[1]=self.pid_motors[1].update(self.INS.dV[1])
             self.distance=self.distanceSensor.getDistance()
             if isnan(self.distance):
                 self.distance=120
-            self.INS.X[2]=np.arctan2(np.sin(self.INS.X[2]), np.cos(self.INS.X[2]))
-            #print(self.RealAngle, 180*self.INS.X[2]/pi)
-            print(self.INS.X)
+            #self.INS.X[2]=np.arctan2(np.sin(self.INS.X[2]), np.cos(self.INS.X[2]))
+            print(self.RealAngle, 180*self.INS.X[2]/pi)
+            #print(self.INS.X)
             #print(dt)
             #print(self.wheelSpeeds)
             #print("c: " ,self.controlerWS,self.pid_motors[0].set_point,self.pid_motors[1].set_point)
