@@ -202,7 +202,7 @@ class Robot(object):
             R[1,0]=-s
             R[0,1]=s
             R[1,1]=c
-            coord=self.midScreen+np.around(rotation.dot(dist_vect))
+            coord=self.midScreen+np.around(R.dot(dist_vect))
             if coord[0]>0 and coord[0] <174 and coord[1]>0 and coord[1]<164:
                 self.screen.putpixel((int(coord[0]),int(coord[1])),0)
                 #print(coord[0],coord[1])
