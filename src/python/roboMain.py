@@ -20,7 +20,7 @@ from rotary_encoder import wheel_encoder as encoder
 from math import pi, copysign, atan2
 import wiringpi
 
-
+from roboMath.movement import calc
 
 
 
@@ -52,6 +52,8 @@ class Robot(object):
             calibrationFile='calibration_data_A.db')
             
         
+
+
         self.distanceSensor = DM.distanceMeas(calibrationFile='calibration_data.db')
         self.minDistance=7.5 #distance at which robot stops from wall
         self.distance=0
@@ -73,7 +75,7 @@ class Robot(object):
         self.velocity_desired=np.zeros(3)
         self.MCfrequency=100.0 #motor control frequency in hertz
         self.clickPerRotation=1.0/1024.0 #rotary encoder clicks per rotation stored as invert to speed calc time
-
+        self.INS=calc(self.wheelRadius,self.bodyRadius)
 
         #inter thread commincation variables
         self.sema=False #Lets all threads know that master thread is online (when true)
@@ -96,36 +98,23 @@ class Robot(object):
         
         self.clicks=np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS)
       
+        self.wheelSpeeds=self.clicks*self.clickPerRotation*self.wheelCircumference/dt
 
-        #print(self.clicks)
-        self.wheelSpeeds=self.clicks*self.clickPerRotation*self.wheelCircumference*self.MCfrequency
-        #print("e: ",self.wheelSpeeds)
-        c=cos(self.RealAngle)
-        s=sin(self.RealAngle)
-        self.rotation[0,0]=c
-        self.rotation[1,1]=c
-        self.rotation[1,0]=-s
-        self.rotation[0,1]=s
-        velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
-        #print(self.wheelSpeeds)
-        #velocity[2]/=3.162
-        self.position+=dt*velocity
-        self.position[2]=self.RealAngle
-        #print(self.position)
         
         
-    def setSpeedAngle(self, a):
-        '''FUnction which is used to spawn the motor control thread
+    def controlMotors(self, a):
+        '''Function which is used to spawn the motor control thread
 
         '''
-        dt=1.0/self.MCfrequency #the time step of one cycle
+        set_dt=1.0/self.MCfrequency #the time step of one cycle
+        dt=set_dt
         old_time=time.clock()
         wiringpi.delayMicroseconds(int((dt*1e6)))
         self.decodeSpeeds(dt) #this resets the encoders to zero to remove any initial errors
         time.sleep(0.01)
         self.position[:]=0
         while self.sema == True: #the sema allows the threads to be closed by another process              
-            self.decodeSpeeds(dt) #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
+             #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             
             self.RealAngle = pi*self.bno.read_euler()[0]/180 #get gyroscope angle
               
@@ -139,12 +128,14 @@ class Robot(object):
             #print("c: " ,self.controlerWS,self.pid_motors[0].set_point,self.pid_motors[1].set_point)
             self.driveMotors.set_speed(self.controlerWS) #set the motor speed based upon the PID
             new_time=time.clock()
-            sleep=int((dt-(new_time-old_time))*1e6)
+            sleep=int((set_dt-(new_time-old_time))*1e6)
             if sleep>0:
               wiringpi.delayMicroseconds(sleep)
             else:
               dt=new_time-old_time #should this lag the dt can be adapted
             old_time=new_time
+            self.decodeSpeeds(dt)
+            self.INS.deltaGlobalX(self.wheelSpeeds,dt)           
         self.driveMotors.set_speed([0, 0]) #set motors to zero on exit
         exit()
 
@@ -172,23 +163,6 @@ class Robot(object):
           self.stopDistance=True
         
          #run at 100 hertz
-      
-
-    def updateSpeedAngle(self, setSpeed, setAngle):
-    
-        velocity=np.zeros(3)
-        self.pid_angle.setPoint(self.setAngle)
-        self.pid_angle.update(self.position[2])
-        while abs(self.pid_angle.error)>pi/180:
-          velocity[2]=self.pid_angle.update(self.position[2])
-          temp2=self.RoboCsys2Wheel.dot(velocity)
-          self.pid_motors[0].setPoint(temp2[0])
-          self.pid_motors[1].setPoint(temp2[1])
-          print(self.pid_angle.error)
-          wiringpi.delayMicroseconds(int((0.01)*1e6))
-        
-        self.pid_motors[0].setPoint(setSpeed)
-        self.pid_motors[1].setPoint(setSpeed)
 
 
     def turnToAngle(self,angle):
@@ -197,7 +171,6 @@ class Robot(object):
         velocity=np.zeros(3)
         
         self.pid_angle.error=100
-        self.RoboCsys2Wheel
         limit=(2*pi)/180
         while abs(self.pid_angle.error)>limit:
             print(180*self.position[2]/pi)
