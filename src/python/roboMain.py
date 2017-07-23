@@ -97,7 +97,7 @@ class Robot(object):
         
         self.clicks=np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS)
       
-        self.wheelSpeedsAngular=self.clicks*self.clickPerRotation/dt
+        self.wheelSpeedsAngular=2 * pi * (self.clicks*self.clickPerRotation)/dt
         self.wheelSpeedsLinear = self.wheelSpeedsAngular*self.wheelRadius
         
         
