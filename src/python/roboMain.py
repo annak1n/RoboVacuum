@@ -184,7 +184,7 @@ class Robot(object):
     def begin(self):
         self.sema = True
         print("starting guidance")
-        self.guidence = thread.start_new_thread(self.setSpeedAngle, (1,))
+        self.guidence = thread.start_new_thread(self.controlMotors, (1,))
         #self.mapping = thread.start_new_thread(self.logDistance, (1,))
         #self.collision=thread.start_new_thread(self.collisionDetection,(1,))
         print("gidance thread initiated")
@@ -195,7 +195,14 @@ class Robot(object):
         while self.sema:
             time.sleep(0.05)
             dist_vect[0]=self.bodyRadius+self.distance
-            coord=self.midScreen+np.around(self.rotation.dot(dist_vect))
+            c=cos(self.INS.X[2])
+            s=sin(self.INS.X[2])
+            R = np.zeros((2,2))
+            R[0,0]=c
+            R[1,0]=-s
+            R[0,1]=s
+            R[1,1]=c
+            coord=self.midScreen+np.around(rotation.dot(dist_vect))
             if coord[0]>0 and coord[0] <174 and coord[1]>0 and coord[1]<164:
                 self.screen.putpixel((int(coord[0]),int(coord[1])),0)
                 #print(coord[0],coord[1])
