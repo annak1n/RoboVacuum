@@ -73,8 +73,8 @@ class Robot(object):
         self.wheel2wheel = 26.5 
         self.weight = 5.0
         self.velocity_desired=np.zeros(3)
-        self.MCfrequency=50.0 #motor control frequency in hertz
-        self.clickPerRotation=1.0/1024.0 #rotary encoder clicks per rotation stored as invert to speed calc time
+        self.MCfrequency=25.0 #motor control frequency in hertz
+        self.clickPerRotation=(2*pi)/1024.0 #rotary encoder clicks per rotation stored as invert to speed calc time
         self.INS=calc(self.wheelRadius,self.bodyRadius)
 
         #inter thread commincation variables
@@ -83,7 +83,8 @@ class Robot(object):
         self.clicks= np.zeros(2)
 
       
-        self.wheelSpeeds=np.zeros(2)
+        self.wheelSpeedsLinear=np.zeros(2)
+        self.wheelSpeedsAngular=np.zeros(2)
         self.controlerWS=np.zeros(2)
         self.papirus = Papirus(rotation = 0)
         self.screen=PIL.Image.new("1",(self.papirus.width,self.papirus.height),"white")
@@ -96,8 +97,8 @@ class Robot(object):
         
         self.clicks=np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS)
       
-        self.wheelSpeeds=self.clicks*self.clickPerRotation*self.wheelCircumference/dt
-
+        self.wheelSpeedsAngular=self.clicks*self.clickPerRotation/dt
+        self.wheelSpeedsLinear = self.wheelSpeedsAngular*self.wheelRadius
         
         
     def controlMotors(self, a):
@@ -112,18 +113,19 @@ class Robot(object):
         time.sleep(0.01)
         while self.sema == True: #the sema allows the threads to be closed by another process              
              #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
-            
+            self.decodeSpeeds(dt)
+            self.INS.deltaGlobalX(self.wheelSpeedsAngular,dt)
             self.RealAngle = self.bno.read_euler()[0] #get gyroscope angle
-              
-            self.controlerWS[0]=self.pid_motors[0].update(self.wheelSpeeds[0])
-            self.controlerWS[1]=self.pid_motors[1].update(self.wheelSpeeds[1])
+            
+            self.controlerWS[0]=self.pid_motors[0].update(self.wheelSpeedsLinear[0])
+            self.controlerWS[1]=self.pid_motors[1].update(self.wheelSpeedsLinear[1])
             self.distance=self.distanceSensor.getDistance()
             if isnan(self.distance):
                 self.distance=120
-            self.INS.X[2]=GetAngleDifference(self.INS.X[2],0)
+            self.INS.X[2]=np.arctan2(np.sin(self.INS.X[2]), np.cos(self.INS.X[2]))
             #print(self.RealAngle, 180*self.INS.X[2]/pi)
-            print(self.INS.dX)
-            print(self.clicks)
+            print(self.INS.X)
+            #print(dt)
             #print(self.wheelSpeeds)
             #print("c: " ,self.controlerWS,self.pid_motors[0].set_point,self.pid_motors[1].set_point)
             self.driveMotors.set_speed(self.controlerWS) #set the motor speed based upon the PID
@@ -134,8 +136,7 @@ class Robot(object):
             else:
               dt=new_time-old_time #should this lag the dt can be adapted
             old_time=new_time
-            self.decodeSpeeds(dt)
-            self.INS.deltaGlobalX(self.wheelSpeeds,dt)           
+           
         self.driveMotors.set_speed([0, 0]) #set motors to zero on exit
         exit()
 

@@ -23,11 +23,11 @@ class calc:
         self.J=np.zeros((3,2))
         self.J[0,:]=0.5*wheelRadius
         self.J[1,:]=0.5*wheelRadius
-        self.J[2,0]=(wheelRadius/(2*wheel2wheel))
-        self.J[2,1]=-(wheelRadius/(2*wheel2wheel))
+        self.J[2,0]=(wheelRadius/(wheel2wheel))
+        self.J[2,1]=-(wheelRadius/(wheel2wheel))
         self.Jinv=np.ones((2,3))
-        self.Jinv[0,2]=(0.5*wheel2wheel)
-        self.Jinv[1,2]=-(0.5*wheel2wheel)
+        self.Jinv[0,2]=(0.25*wheel2wheel)
+        self.Jinv[1,2]=-(0.25*wheel2wheel)
         self.Jinv *= 1/wheelRadius
 
     def deltaGlobalX(self,dRho,dt):
@@ -38,7 +38,6 @@ class calc:
         tempJ=np.array(self.J,copy=True)
         tempJ[0,:] *= cos(angle)
         tempJ[1,:] *= sin(angle)
-        print(tempJ)
         self.dX = tempJ.dot(dRho)
         self.X += self.dX*dt
 
