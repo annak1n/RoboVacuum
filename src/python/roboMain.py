@@ -70,7 +70,7 @@ class Robot(object):
         self.weight = 5.0
 
         self.MCfrequency=25.0 #motor control frequency in hertz
-        self.INS=calc(self.wheelRadius,self.bodyRadius)
+        self.INS=calc(2.65,27.0)
 
         #inter thread commincation variables
         self.sema=False #Lets all threads know that master thread is online (when true)
@@ -94,12 +94,12 @@ class Robot(object):
         dt=set_dt
         old_time=time.clock()
         wiringpi.delayMicroseconds(int((dt*1e6)))
-        self.decodeSpeeds(dt) #this resets the encoders to zero to remove any initial errors
+        self.rotEncode.read_counters(np.zeros(2)) #this resets the encoders to zero to remove any initial errors
         time.sleep(0.01)
         while self.sema == True: #the sema allows the threads to be closed by another process              
              #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             #self.decodeSpeeds(dt)
-            self.INS.rotWheels(np.copysign(self.rotEncode.read_counters(self.clicks),self.controlerWS),dt)
+            self.INS.rotWheels(np.copysign(self.rotEncode.read_counters(np.zeros(2)),self.controlerWS),dt)
             self.RealAngle = -self.bno.read_euler()[0] #get gyroscope angle
             
             self.controlerWS[0]=self.pid_motors[0].update(self.INS.dV[0])
@@ -194,8 +194,8 @@ class Robot(object):
                 #print(coord[0],coord[1])
             if (time.time()-t)>5:
               t=time.time()
-              self.papirus.display(self.screen)
-              self.papirus.update()
+              #self.papirus.display(self.screen)
+              #self.papirus.update()
         self.papirus.display(self.screen)
         print("mapping done")
         self.papirus.update()

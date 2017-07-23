@@ -19,7 +19,7 @@ r.begin()
 
 #r.turnToAngle(3.14/2)
 r.pid_motors[0].setPoint(10)
-r.pid_motors[1].setPoint(10)
+r.pid_motors[1].setPoint(-10)
 r.logDistance(1)
 
 #self.controlerWS[0]=1

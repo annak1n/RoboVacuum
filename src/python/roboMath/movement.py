@@ -35,7 +35,7 @@ class calc:
         self.Jinv *= 1/self.WheelRadius
 
     def rotWheels(self,counts,dt):
-        self.dRho=(counts/self.CountsPerRotation) * 2 * pi
+        self.dRho=((counts/self.CountsPerRotation) * 2 * pi)/dt #radians per second
         self.dV = self.dRho * self.WheelRadius
         self.deltaGlobalX(self.dRho,dt)
 
