@@ -65,21 +65,11 @@ class Robot(object):
         D=0.01
         self.pid_motors=[PID(P=P,I=I,D=D),PID(P=P,I=I,D=D)]
         self.rotEncode = encoder.WheelEncoder()
-        self.bodyRadius = 32.0/2.0  # cm
-        self.wheelRadius = 3  # cm need to check
+        self.bodyRadius = 32.0*0.5  # cm
+        self.wheelRadius = 3.4  # cm need to check
         self.wheelCircumference = self.wheelRadius*2.0*pi
         self.wheel2wheel = 26.5 
         self.weight = 5.0
-        self.Wheel2RoboCsys=np.zeros((3,2))
-        self.Wheel2RoboCsys[0,1]=0.5*self.wheelRadius
-        self.Wheel2RoboCsys[0,0]=0.5*self.wheelRadius
-        self.Wheel2RoboCsys[2,0]=0.5*(self.wheelRadius/(0.5*self.wheel2wheel))
-        self.Wheel2RoboCsys[2,0]=-0.5*(self.wheelRadius/(0.5*self.wheel2wheel))
-        self.RoboCsys2Wheel=np.zeros((2,3))
-        self.RoboCsys2Wheel[0,0]=1/self.wheelRadius
-        self.RoboCsys2Wheel[1,0]=1/self.wheelRadius
-        self.RoboCsys2Wheel[0,2]=(0.5*self.wheel2wheel)/self.wheelRadius
-        self.RoboCsys2Wheel[1,2]=-(0.5*self.wheel2wheel)/self.wheelRadius
         self.velocity_desired=np.zeros(3)
         self.MCfrequency=100.0 #motor control frequency in hertz
         self.clickPerRotation=1.0/1024.0 #rotary encoder clicks per rotation stored as invert to speed calc time

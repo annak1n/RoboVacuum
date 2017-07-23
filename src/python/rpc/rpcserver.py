@@ -9,6 +9,7 @@ import time
 # list here all classes that you wish to be able to access remotely
 from test import MyClass
 
+from ..roboMain import Robot
 
 # coreList - list of cores that will run RPC servers
 # invoke RPCs on each other
