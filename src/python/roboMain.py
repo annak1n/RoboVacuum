@@ -89,7 +89,7 @@ class Robot(object):
         self.controlerWS=np.zeros(2)
         self.papirus = Papirus(rotation = 0)
         self.screen=PIL.Image.new("1",(self.papirus.width,self.papirus.height),"white")
-        self.midScreen=np.array([self.papirus.width/2,self.papirus.height/2,0])
+        self.midScreen=np.array([self.papirus.width/2,self.papirus.height/2])
 
     def decodeSpeeds(self,dt):
         '''Function for converting the encoder output to wheel velocities 
