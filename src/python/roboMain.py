@@ -190,7 +190,7 @@ class Robot(object):
         print("gidance thread initiated")
     
     def logDistance(self,a):
-        dist_vect=np.zeros(3) 
+        dist_vect=np.zeros(2) 
         t=time.time()       
         while self.sema:
             time.sleep(0.05)
@@ -202,7 +202,7 @@ class Robot(object):
             R[1,0]=-s
             R[0,1]=s
             R[1,1]=c
-            coord=self.midScreen+np.around(R.dot(dist_vect))
+            coord=self.midScreen+np.around(R.dot(dist_vect)) + self.INS.X[1:2]
             if coord[0]>0 and coord[0] <174 and coord[1]>0 and coord[1]<164:
                 self.screen.putpixel((int(coord[0]),int(coord[1])),0)
                 #print(coord[0],coord[1])
