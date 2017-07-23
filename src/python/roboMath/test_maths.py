@@ -11,7 +11,7 @@ class TestRoboMathMethods(unittest.TestCase):
         self.w2w=24.5
         self.wr=3.4
         self.INS =  mv.calc(self.wr,self.w2w)
-        self.steps=50
+        self.steps=2
         self.dt=1/self.steps
 
     def test_moveForward(self):
@@ -84,15 +84,16 @@ class TestRoboMathMethods(unittest.TestCase):
         #test case1: wheels rotate equal and oposite
         r=(self.w2w/2)
         dist= r * pi/2 #arc length
-        anglular_movement = (dist/self.wr) # angle radians
-        dOmega = anglular_movement/(self.dt*self.steps) #radians per second
-        c=floor(self.INS.CountsPerRotation * dOmega/(2*pi))
+        wheelRotations = (dist/(2*pi*self.wr)) # fraction 
+        blips = wheelRotations*self.INS.CountsPerRotation
+        c=floor(blips*self.dt)
+
         counts[0] = c
         counts[1] = -c
 
         for t in range(0,self.steps):
             self.INS.rotWheels(counts,self.dt)
-        print(self.INS.X[2]-pi/2)
+        print(self.INS.X[2]/(pi/2))
         self.assertTrue(abs(self.INS.X[2]-pi/2)<0.001)
         self.assertTrue(abs(self.INS.X[1])<0.000001)
         self.assertTrue(abs(self.INS.X[0])<0.000001)
