@@ -11,7 +11,7 @@ class TestRoboMathMethods(unittest.TestCase):
         self.w2w=24.5
         self.wr=3.4
         self.INS =  mv.calc(self.wr,self.w2w)
-        self.steps=2
+        self.steps=600
         self.dt=1/self.steps
 
     def test_moveForward(self):
