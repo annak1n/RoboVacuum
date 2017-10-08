@@ -21,7 +21,7 @@ from math import pi, copysign, atan2
 import wiringpi
 
 from roboMath.movement import calc
-
+from mapping import map
 
 
 
@@ -76,8 +76,9 @@ class Robot(object):
         self.sema=False #Lets all threads know that master thread is online (when true)
         self.stopDistance=False
 
-
-      
+        self.navGoal=np.zeros(3)+2500
+        self.INS.X+=2500
+        self.map=map()
         self.wheelSpeedsLinear=np.zeros(2)
         self.wheelSpeedsAngular=np.zeros(2)
         self.controlerWS=np.zeros(2)
@@ -94,25 +95,24 @@ class Robot(object):
         dt=set_dt
         old_time=time.clock()
         wiringpi.delayMicroseconds(int((dt*1e6)))
-        self.rotEncode.read_counters(np.zeros(2)) #this resets the encoders to zero to remove any initial errors
+        buffer = np.zeros(2)
+        self.rotEncode.read_counters(buffer) #this resets the encoders to zero to remove any initial errors
         time.sleep(0.01)
+        
         while self.sema == True: #the sema allows the threads to be closed by another process              
              #get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             #self.decodeSpeeds(dt)
-            self.INS.rotWheels(np.copysign(self.rotEncode.read_counters(np.zeros(2)),self.controlerWS),dt)
-            self.RealAngle = -self.bno.read_euler()[0] #get gyroscope angle
+            self.INS.rotWheels(np.copysign(self.rotEncode.read_counters(buffer),self.controlerWS),dt)
+            self.RealAngle = pi*(-self.bno.read_euler()[0])/180 #get gyroscope angle
             
-            self.controlerWS[0]=self.pid_motors[0].update(self.INS.dV[0])
-            self.controlerWS[1]=self.pid_motors[1].update(self.INS.dV[1])
+            self.controlerWS[0]=self.pid_motors[0].update(self.INS.V[0])
+            self.controlerWS[1]=self.pid_motors[1].update(self.INS.V[1])
             self.distance=self.distanceSensor.getDistance()
             if isnan(self.distance):
                 self.distance=120
-            #self.INS.X[2]=np.arctan2(np.sin(self.INS.X[2]), np.cos(self.INS.X[2]))
-            print(self.RealAngle, 180*self.INS.X[2]/pi)
-            #print(self.INS.X)
-            #print(dt)
-            #print(self.wheelSpeeds)
-            #print("c: " ,self.controlerWS,self.pid_motors[0].set_point,self.pid_motors[1].set_point)
+            else:
+                self.map.addPoint(self.INS.X+ self.distance*np.array([cos(self.RealAngle), sin(self.RealAngle) ]))
+
             self.driveMotors.set_speed(self.controlerWS) #set the motor speed based upon the PID
             new_time=time.clock()
             sleep=int((set_dt-(new_time-old_time))*1e6)
@@ -237,4 +237,18 @@ class Robot(object):
     def stopBrush(self):
         worker = thread.start_new_thread(
             self.brushMotors.set_speed, ([0, 0, 0],))
+
+    def navigate(self):
+        
+        while True:
+            Dobjective=self.INS.X-self.navGoal
+            if np.linalg.norm(Dobjective)<5:
+                #need new objective
+                pass
+            else:
+                if self.map.checkLine(self.navGoal) is not False:
+                  self.navGoal = self.map.checkLine(self.navGoal) - (Dobjective/np.linalg.norm(Dobjective))*self.INS.ChassisWidth/2
+
+
+        pass
 
