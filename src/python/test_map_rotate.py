@@ -16,8 +16,8 @@ r.begin()
 #r.patternMove()
 
 #r.turnToAngle(3.14/2)
-r.pid_motors[0].setPoint(20)
-r.pid_motors[1].setPoint(-20)
+r.pid_motors[0].setPoint(10)
+r.pid_motors[1].setPoint(-10)
 r.logDistance(1)
 
 time.sleep(5)
