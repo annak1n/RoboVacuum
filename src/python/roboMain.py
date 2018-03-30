@@ -7,6 +7,7 @@ import sys
 import select
 from papirus import Papirus
 import PIL
+from PIL import ImageDraw
 import Queue
 #from threading import Thread
 import thread
@@ -22,7 +23,7 @@ import wiringpi
 
 
 
-
+from copy import copy
 
 
 
@@ -238,6 +239,9 @@ class Robot(object):
                 #print(coord[0],coord[1])
             if (time.time()-t)>5:
               t=time.time()
+              buff =copy(self.screen)
+              d=ImageDraw.draw(buff)
+              d.line(self.midScreen,self.midScreen+self.rotation.dot(np.array([5,0,0])),fill=0)
               self.papirus.display(self.screen)
               self.papirus.update()
         self.papirus.display(self.screen)
