@@ -116,8 +116,8 @@ class Robot(object):
         s=sin(self.RealAngle)
         self.rotation[0,0]=c
         self.rotation[1,1]=c
-        self.rotation[1,0]=-s
-        self.rotation[0,1]=s
+        self.rotation[1,0]=s
+        self.rotation[0,1]=-s
         velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
         #print(self.wheelSpeeds)
         #velocity[2]/=3.162
@@ -235,8 +235,8 @@ class Robot(object):
             time.sleep(0.05)
             dist_vect[0]=self.bodyRadius+self.distance
             coord=self.midScreen+np.round(self.rotation.dot(dist_vect))
-            if coord[1]>0 and coord[1] <174 and coord[0]>0 and coord[0]<164:
-                self.screen.putpixel((int(coord[1]),int(coord[0])),0)
+            if coord[0]>0 and coord[0] <174 and coord[1]>0 and coord[1]<164:
+                self.screen.putpixel((int(coord[0]),int(coord[1])),0)
                 #print(coord[0],coord[1])
             if (time.time()-t)>5:
               t=time.time()
