@@ -93,8 +93,8 @@ class Robot(object):
         self.clicks = np.zeros(2)
         self.rotation = np.zeros((3, 3))
         self.position = np.zeros(3)
-        self.location = np.zeros(2)
-        self.observations = []
+        self.location = np.array([200,200]])
+        self.observations = np.zeros(400,400)
 
         self.rotation[2, 2] = 1
 
@@ -162,8 +162,8 @@ class Robot(object):
 
             dist_vect = np.zeros(3)
             dist_vect[0] = self.bodyRadius+self.distance
-            self.observations.append(
-                self.location+(np.round(self.rotation.dot(dist_vect)))[0:2])
+            coord=self.location+(np.round(self.rotation.dot(dist_vect)))[0:2]
+            self.observations[coord[0],coord[1]]=time.time()
 
             new_time = time.clock()
 
@@ -249,11 +249,11 @@ class Robot(object):
                 # print(coord[0],coord[1])
             if (time.time()-t) > 5:
                 t = time.time()
-                canvas = PIL.Image.new(
+                .new(
                     "1", (self.papirus.width, self.papirus.height), "white")
-                for coord in self.observations:
-                    if coord[0] > 0 and coord[0] < 174 and coord[1] > 0 and coord[1] < 164:
-                        canvas.putpixel((int(coord[0]), int(coord[1])), 0)
+                ll = self.location-self.midScreen
+                temp = self.observations[ll[0]:self.papirus.width,ll[1]:self.papirus.height]
+                canvas = PIL.Image.fromarray(temp>time.time()-20)
 
                 d = ImageDraw.Draw(canvas)
                 li = self.midScreen+self.rotation.dot(np.array([15, 0, 0]))
