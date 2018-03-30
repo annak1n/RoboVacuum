@@ -234,15 +234,15 @@ class Robot(object):
         while self.sema:
             time.sleep(0.05)
             dist_vect[0]=self.bodyRadius+self.distance
-            coord=self.midScreen+np.around(self.rotation.dot(dist_vect))
-            if coord[0]>0 and coord[0] <174 and coord[1]>0 and coord[1]<164:
-                self.screen.putpixel((int(coord[0]),int(coord[1])),0)
+            coord=self.midScreen+np.round(self.rotation.dot(dist_vect))
+            if coord[1]>0 and coord[1] <174 and coord[0]>0 and coord[0]<164:
+                self.screen.putpixel((int(coord[1]),int(coord[0])),0)
                 #print(coord[0],coord[1])
             if (time.time()-t)>5:
               t=time.time()
               buff =copy(self.screen)
               d=ImageDraw.Draw(buff)
-              li = self.midScreen+self.rotation.dot(np.array([25,0,0]))
+              li = self.midScreen+self.rotation.dot(np.array([15,0,0]))
               d.line((self.midScreen[0],self.midScreen[1],li[0],li[1]),fill=0)
               self.papirus.display(buff)
               self.papirus.update()
