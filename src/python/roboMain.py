@@ -98,6 +98,7 @@ class Robot(object):
         self.controlerWS=np.zeros(2)
         self.papirus = Papirus(rotation = 0)
         self.screen=PIL.Image.new("1",(self.papirus.width,self.papirus.height),"white")
+        self.papirus.update()
         self.midScreen=np.array([self.papirus.width/2,self.papirus.height/2,0])
 
     def decodeSpeeds(self,dt):
@@ -241,7 +242,7 @@ class Robot(object):
               t=time.time()
               buff =copy(self.screen)
               d=ImageDraw.Draw(buff)
-              li = self.midScreen+self.rotation.dot(np.array([5,0,0]))
+              li = self.midScreen+self.rotation.dot(np.array([25,0,0]))
               d.line((self.midScreen[0],self.midScreen[1],li[0],li[1]),fill=0)
               self.papirus.display(self.screen)
               self.papirus.update()
