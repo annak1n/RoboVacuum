@@ -93,8 +93,8 @@ class Robot(object):
         self.clicks = np.zeros(2)
         self.rotation = np.zeros((3, 3))
         self.position = np.zeros(3)
-        self.location = np.array([200,200]])
-        self.observations = np.zeros(400,400)
+        self.location = np.array([200,200])
+        self.observations = np.zeros((400,400))
 
         self.rotation[2, 2] = 1
 
@@ -248,12 +248,12 @@ class Robot(object):
 
                 # print(coord[0],coord[1])
             if (time.time()-t) > 5:
-                t = time.time()
-                .new(
-                    "1", (self.papirus.width, self.papirus.height), "white")
-                ll = self.location-self.midScreen
-                temp = self.observations[ll[0]:self.papirus.width,ll[1]:self.papirus.height]
-                canvas = PIL.Image.fromarray(temp>time.time()-20)
+                print(self.distance)
+		t = time.time()
+                ll = self.location[0:1]-self.midScreen
+                temp = self.observations[ll[0]:ll[0]+self.papirus.width-1,ll[1]:ll[1]+self.papirus.height-1]
+                print(temp.shape,self.papirus.width,self.papirus.height)
+		canvas = PIL.Image.fromarray((temp>time.time()-20)*1.0)
 
                 d = ImageDraw.Draw(canvas)
                 li = self.midScreen+self.rotation.dot(np.array([15, 0, 0]))
@@ -301,3 +301,4 @@ class Robot(object):
     def stopBrush(self):
         worker = thread.start_new_thread(
             self.brushMotors.set_speed, ([0, 0, 0],))
+
