@@ -81,7 +81,7 @@ class Robot(object):
         self.RoboCsys2Wheel[0,2]=(0.5*self.wheel2wheel)/self.wheelRadius
         self.RoboCsys2Wheel[1,2]=-(0.5*self.wheel2wheel)/self.wheelRadius
         self.velocity_desired=np.zeros(3)
-        self.MCfrequency=100.0 #motor control frequency in hertz
+        self.MCfrequency=50.0 #motor control frequency in hertz
         self.clickPerRotation=1.0/1024.0 #rotary encoder clicks per rotation stored as invert to speed calc time
 
 
@@ -177,9 +177,9 @@ class Robot(object):
               
         '''The error between the measured angle and the odometer angle provides an indication that robot has crashed
         '''
-        print(self.OdoAngle,self.RealAngle)
-        if abs(self.OdoAngle - self.RealAngle)>3:
-          self.stopDistance=True
+        #print(self.OdoAngle,self.RealAngle)
+        #if abs(self.OdoAngle - self.RealAngle)>3:
+        #  self.stopDistance=True
         
          #run at 100 hertz
       
