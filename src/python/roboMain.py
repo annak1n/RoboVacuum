@@ -137,7 +137,7 @@ class Robot(object):
         #velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
         # print(self.wheelSpeeds)
         # velocity[2]/=3.162
-        self.position += dt*velocity
+        #self.position += dt*velocity
         #self.position[2] = self.RealAngle
         # print(self.position)
 
