@@ -170,7 +170,7 @@ class Robot(object):
                 self.wheelSpeeds[0])
             self.controlerWS[1] = self.pid_motors[1].update(
                 self.wheelSpeeds[1])
-            print(self.wheelSpeeds.to('cm/s'),self.controlerWS)
+            #print(self.wheelSpeeds.to('cm/s'),self.controlerWS)
             self.distance = self.distanceSensor.getDistance()
             if isnan(self.distance):
                 self.distance = 120 
@@ -178,13 +178,13 @@ class Robot(object):
             temp = np.zeros(3)* self.ureg.cm
             temp[0]=(self.distance+self.bodyRadius)
             self.observations.append(self.rotation.dot(temp))
-            #print(self.distance)
+            print(self.distance)
             # set the motor speed based upon the PID
             self.driveMotors.set_speed(vel_2_pmw(self.controlerWS.to('cm/s').magnitude))
             new_time = time.clock() *self.ureg.seconds
             #print("elapsed",new_time-old_time)
             sleep = int((dt-(new_time-old_time)).to('microseconds').magnitude)
-            print(sleep)
+            #print(sleep)
             if sleep > 0:
                 wiringpi.delayMicroseconds(sleep)
                 #dt = new_time-old_time  # should this lag the dt can be adapted
