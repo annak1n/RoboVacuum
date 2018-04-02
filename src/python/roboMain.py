@@ -146,8 +146,8 @@ class Robot(object):
 
         '''
         dt = 1.0/self.MCfrequency  # the time step of one cycle
-        old_time = time.clock()
-        wiringpi.delayMicroseconds(int((dt*1e6)))
+        old_time = time.clock()*self.ureg.seconds
+        wiringpi.delayMicroseconds(int((dt.to('microsecond').magnitude)))
         # this resets the encoders to zero to remove any initial errors
         self.decodeSpeeds(dt)
         time.sleep(0.01)
@@ -175,7 +175,7 @@ class Robot(object):
             coord = self.location+(np.round(self.rotation.dot(dist_vect)))[0:2]
             self.observations[coord[0], coord[1]] = time.time()
 
-            new_time = time.clock()
+            new_time = time.clock() *self.ureg.seconds
 
             sleep = int((dt-(new_time-old_time))*1e6)
             if sleep > 0:
