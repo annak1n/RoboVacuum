@@ -109,7 +109,7 @@ class Robot(object):
 
         self.wheelSpeeds = np.zeros(2)
         self.encoder_values = lag_filter(1/self.MCfrequency,0.5*self.ureg.second,0.95,np.zeros((2))*self.ureg.dimensionless)
-        self.controlerWS = np.zeros(2)
+        self.controlerWS = np.zeros(2) * self.ureg.cm/self.ureg.seconds
         self.papirus = Papirus(rotation=0)
         self.screen = PIL.Image.new(
             "1", (self.papirus.width, self.papirus.height), "white")
@@ -163,18 +163,11 @@ class Robot(object):
                 self.wheelSpeeds[0])
             self.controlerWS[1] = self.pid_motors[1].update(
                 self.wheelSpeeds[1])
-            self.distance = self.distanceSensor.getDistance()
+            self.distance = self.distanceSensor.getDistance() * self.ureg.cm
             if isnan(self.distance):
-                self.distance = 120
-
+                self.distance = 120 *self.ureg.cm
             # set the motor speed based upon the PID
-            self.driveMotors.set_speed(self.controlerWS)
-
-            dist_vect = np.zeros(3)
-            dist_vect[0] = self.bodyRadius+self.distance
-            coord = self.location+(np.round(self.rotation.dot(dist_vect)))[0:2]
-            self.observations[coord[0], coord[1]] = time.time()
-
+            self.driveMotors.set_speed(self.controlerWS.to('cm/s').magnitude)
             new_time = time.clock() *self.ureg.seconds
 
             sleep = int((dt-(new_time-old_time))*1e6)
