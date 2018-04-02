@@ -173,7 +173,7 @@ class Robot(object):
             self.driveMotors.set_speed(self.controlerWS.to('cm/s').magnitude)
             new_time = time.clock() *self.ureg.seconds
 
-            sleep = int((dt-(new_time-old_time))*1e6)
+            sleep = int((dt-(new_time-old_time)).to('microseconds').magnitude)
             if sleep > 0:
                 wiringpi.delayMicroseconds(sleep)
             else:
