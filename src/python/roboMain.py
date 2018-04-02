@@ -1,3 +1,4 @@
+from pint import UnitRegistry
 import motor_control.motor_class as MC
 import time
 import os
@@ -20,7 +21,7 @@ from math import cos, sin, pi, radians, isnan
 from rotary_encoder import wheel_encoder as encoder
 from math import pi, copysign, atan2
 import wiringpi
-
+from filters.lag import lag_filter
 
 from copy import copy
 
@@ -38,6 +39,7 @@ class Robot(object):
         - Connection to accelerometer BNO055
         - Connection to distance sensor
         '''
+        self.ureg = UnitRegistry()
         self.driveMotors = MC.motor_group([0x61, 0x61], [1, 3], [1, -1])
         self.brushMotors = MC.motor_group(
             [0x60, 0x60, 0X61], [1, 3, 4], [-1, 1, 1])
@@ -56,19 +58,20 @@ class Robot(object):
         self.distance = 0
         self.speed = 0
         self.setAngle = 0.0
-        self.RealAngle = self.bno.read_euler()[0]
+        self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
         self.OdoAngle = 0
         self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True)
         P = 4.0*.6
         I = 0.5
         D = 0.01
-        self.pid_motors = [PID(P=P, I=I, D=D), PID(P=P, I=I, D=D)]
-        self.rotEncode = encoder.WheelEncoder()
-        self.bodyRadius = 32.0/2.0  # cm
-        self.wheelRadius = 3  # cm need to check
+        self.pid_motors = [PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds), PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds)]
+
+        self.bodyRadius = (32.0/2.0)*self.ureg.cm  # cm
+        self.wheelRadius = 3*self.ureg.cm  # cm need to check
         self.wheelCircumference = self.wheelRadius*2.0*pi
-        self.wheel2wheel = 26.5
-        self.weight = 5.0
+        self.wheel2wheel = 26.5*self.ureg.cm
+        self.weight = 5.0*self.ureg.kg
+
         self.Wheel2RoboCsys = np.zeros((3, 2))
         self.Wheel2RoboCsys[0, 1] = 0.5*self.wheelRadius
         self.Wheel2RoboCsys[0, 0] = 0.5*self.wheelRadius
@@ -82,9 +85,11 @@ class Robot(object):
         self.RoboCsys2Wheel[0, 2] = (0.5*self.wheel2wheel)/self.wheelRadius
         self.RoboCsys2Wheel[1, 2] = -(0.5*self.wheel2wheel)/self.wheelRadius
         self.velocity_desired = np.zeros(3)
-        self.MCfrequency = 50.0  # motor control frequency in hertz
+        self.MCfrequency = 50.0/self.ureg.second  # motor control frequency in hertz
         # rotary encoder clicks per rotation stored as invert to speed calc time
-        self.clickPerRotation = 1.0/1024.0
+        self.rad_per_click = (2*pi/1024.0)*self.ureg.radians
+        self.rotEncode = encoder.WheelEncoder()
+        
 
         # inter thread commincation variables
         # Lets all threads know that master thread is online (when true)
@@ -93,12 +98,13 @@ class Robot(object):
         self.clicks = np.zeros(2)
         self.rotation = np.zeros((3, 3))
         self.position = np.zeros(3)
-        self.location = np.array([200,200])
-        self.observations = np.zeros((400,400))
+        self.location = np.array([200, 200])
+        self.observations = np.zeros((400, 400))
 
         self.rotation[2, 2] = 1
 
         self.wheelSpeeds = np.zeros(2)
+        self.encoder_values = lag_filter(1/self.MCfrequency,0.5*self.ureg.second,0.95,np.zeros((2))*self.ureg.dimensionless)
         self.controlerWS = np.zeros(2)
         self.papirus = Papirus(rotation=0)
         self.screen = PIL.Image.new(
@@ -113,10 +119,10 @@ class Robot(object):
 
         self.clicks = np.copysign(
             self.rotEncode.read_counters(self.clicks), self.controlerWS)
+        self.encoder_values.update(self.clicks)
 
         # print(self.clicks)
-        self.wheelSpeeds = self.clicks*self.clickPerRotation * \
-            self.wheelCircumference*self.MCfrequency
+        self.wheelSpeeds = self.encoder_values.value()*self.rad_per_click*self.wheelRadius/self.MCfrequency
         #print("e: ",self.wheelSpeeds)
         c = cos(self.RealAngle)
         s = sin(self.RealAngle)
@@ -147,7 +153,7 @@ class Robot(object):
             self.decodeSpeeds(dt)
 
             # get gyroscope angle
-            self.RealAngle = pi*self.bno.read_euler()[0]/180
+            self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
 
             self.controlerWS[0] = self.pid_motors[0].update(
                 self.wheelSpeeds[0])
@@ -162,8 +168,8 @@ class Robot(object):
 
             dist_vect = np.zeros(3)
             dist_vect[0] = self.bodyRadius+self.distance
-            coord=self.location+(np.round(self.rotation.dot(dist_vect)))[0:2]
-            self.observations[coord[0],coord[1]]=time.time()
+            coord = self.location+(np.round(self.rotation.dot(dist_vect)))[0:2]
+            self.observations[coord[0], coord[1]] = time.time()
 
             new_time = time.clock()
 
@@ -247,14 +253,11 @@ class Robot(object):
         while self.sema:
 
                 # print(coord[0],coord[1])
+            print(self.distance)
             if (time.time()-t) > 5:
                 print(self.distance)
-		t = time.time()
-                ll = self.location[0:1]-self.midScreen
-                temp = self.observations[ll[0]:ll[0]+self.papirus.width-1,ll[1]:ll[1]+self.papirus.height-1]
-                print(temp.shape,self.papirus.width,self.papirus.height)
-		canvas = PIL.Image.fromarray((temp>time.time()-20)*1.0)
-
+                t = time.time()
+                canvas = copy(self.screen)
                 d = ImageDraw.Draw(canvas)
                 li = self.midScreen+self.rotation.dot(np.array([15, 0, 0]))
                 d.line(
@@ -301,4 +304,3 @@ class Robot(object):
     def stopBrush(self):
         worker = thread.start_new_thread(
             self.brushMotors.set_speed, ([0, 0, 0],))
-

@@ -31,18 +31,18 @@ class PID:
     Discrete PID control
     """
 
-    def __init__(self, P=2.0, I=0.0, D=1.0, Derivator=0, Integrator=0, Integrator_max=500, Integrator_min=-500, Angle=False):
+    def __init__(self, P=2.0, I=0.0, D=1.0, Derivator=0, Integrator=0, Integrator_max=500, Integrator_min=-500, Angle=False, unit = 1):
 
         self.Kp = P
         self.Ki = I
         self.Kd = D
-        self.Derivator = Derivator
-        self.Integrator = Integrator
-        self.Integrator_max = Integrator_max
-        self.Integrator_min = Integrator_min
+        self.Derivator = Derivator * unit
+        self.Integrator = Integrator * unit
+        self.Integrator_max = Integrator_max * unit
+        self.Integrator_min = Integrator_min * unit
         self.Angle = Angle
-        self.set_point = 0.0
-        self.error = 0.0
+        self.set_point = 0.0 * unit
+        self.error = 0.0 * unit
 
     def update(self, current_value):
         """
