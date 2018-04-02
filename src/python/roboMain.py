@@ -138,7 +138,7 @@ class Robot(object):
         # print(self.wheelSpeeds)
         # velocity[2]/=3.162
         self.position += dt*velocity
-        self.position[2] = self.RealAngle
+        #self.position[2] = self.RealAngle
         # print(self.position)
 
     def setSpeedAngle(self, a):
@@ -157,7 +157,7 @@ class Robot(object):
             self.decodeSpeeds(dt)
 
             # get gyroscope angle
-            self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
+            self.RealAngle = (self.bno.read_euler()[0])*self.ureg.degree
 
             self.controlerWS[0] = self.pid_motors[0].update(
                 self.wheelSpeeds[0])
@@ -257,9 +257,9 @@ class Robot(object):
         while self.sema:
 
                 # print(coord[0],coord[1])
-            print(self.distance)
+            
             if (time.time()-t) > 5:
-                print(self.distance)
+                print(self.RealAngle)
                 t = time.time()
                 canvas = copy(self.screen)
                 d = ImageDraw.Draw(canvas)
