@@ -120,6 +120,7 @@ class Robot(object):
         self.papirus = Papirus(rotation=0)
         self.screen = PIL.Image.new(
             "1", (self.papirus.width, self.papirus.height), "white")
+        self.papirus.display(self.screen)
         self.papirus.update()
         self.midScreen = np.array(
             [self.papirus.width/2, self.papirus.height/2, 0])
