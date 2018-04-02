@@ -25,6 +25,9 @@ from filters.lag import lag_filter
 
 from copy import copy
 
+def vel_2_pmw(v):
+    return(v*7.5)
+
 
 class Robot(object):
     '''
@@ -61,9 +64,9 @@ class Robot(object):
         self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
         self.OdoAngle = 0
         self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True)
-        P = 4
-        I = 0.5
-        D = 0.0
+        P = 0.5
+        I = 0
+        D = 0
         self.pid_motors = [PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds), PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds)]
 
         self.bodyRadius = (32.0/2.0)*self.ureg.cm  # cm
@@ -171,7 +174,7 @@ class Robot(object):
                 self.distance*= self.ureg.cm
             print(self.distance)
             # set the motor speed based upon the PID
-            self.driveMotors.set_speed(self.controlerWS.to('cm/s').magnitude)
+            self.driveMotors.set_speed(vel_2_pmw(self.controlerWS.to('cm/s').magnitude))
             new_time = time.clock() *self.ureg.seconds
             #print("elapsed",new_time-old_time)
             sleep = int((dt-(new_time-old_time)).to('microseconds').magnitude)
