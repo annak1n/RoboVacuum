@@ -173,7 +173,7 @@ class Robot(object):
             # set the motor speed based upon the PID
             self.driveMotors.set_speed(self.controlerWS.to('cm/s').magnitude)
             new_time = time.clock() *self.ureg.seconds
-
+            print("elapsed",new_time-old_time)
             sleep = int((dt-(new_time-old_time)).to('microseconds').magnitude)
             print(sleep)
             if sleep > 0:
