@@ -73,17 +73,21 @@ class Robot(object):
         self.weight = 5.0*self.ureg.kg
 
         self.Wheel2RoboCsys = np.zeros((3, 2))
+        '''
         self.Wheel2RoboCsys[0, 1] = 0.5*self.wheelRadius
         self.Wheel2RoboCsys[0, 0] = 0.5*self.wheelRadius
         self.Wheel2RoboCsys[2, 0] = 0.5 * \
             (self.wheelRadius/(0.5*self.wheel2wheel))
         self.Wheel2RoboCsys[2, 0] = -0.5 * \
             (self.wheelRadius/(0.5*self.wheel2wheel))
+        '''
         self.RoboCsys2Wheel = np.zeros((2, 3))
+        '''
         self.RoboCsys2Wheel[0, 0] = 1/self.wheelRadius
         self.RoboCsys2Wheel[1, 0] = 1/self.wheelRadius
         self.RoboCsys2Wheel[0, 2] = (0.5*self.wheel2wheel)/self.wheelRadius
         self.RoboCsys2Wheel[1, 2] = -(0.5*self.wheel2wheel)/self.wheelRadius
+        '''
         self.velocity_desired = np.zeros(3)
         self.MCfrequency = 50.0/self.ureg.second  # motor control frequency in hertz
         # rotary encoder clicks per rotation stored as invert to speed calc time
