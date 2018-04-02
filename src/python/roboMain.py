@@ -178,8 +178,7 @@ class Robot(object):
             print(sleep)
             if sleep > 0:
                 wiringpi.delayMicroseconds(sleep)
-            else:
-                dt = new_time-old_time  # should this lag the dt can be adapted
+                #dt = new_time-old_time  # should this lag the dt can be adapted
             old_time = new_time
         self.driveMotors.set_speed([0, 0])  # set motors to zero on exit
         exit()
