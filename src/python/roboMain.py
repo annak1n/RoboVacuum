@@ -168,17 +168,17 @@ class Robot(object):
             self.RealAngle = (self.bno.read_euler()[0])*self.ureg.degree
             self.distance = self.distanceSensor.getDistance()
             if isnan(self.distance):
-                self.distance = 120 
-            self.distance*= self.ureg.cm
+                self.distance = 120 * self.ureg.cm
+            else:
+                self.distance*= self.ureg.cm
+                temp = np.zeros(3)* self.ureg.cm
+                temp[0]=(self.distance+self.bodyRadius)
+                self.observations.append(self.rotation.dot(temp))
             self.controlerWS[0] = self.pid_motors[0].update(
                 self.wheelSpeeds[0])
             self.controlerWS[1] = self.pid_motors[1].update(
                 self.wheelSpeeds[1])
             #print(self.wheelSpeeds.to('cm/s'),self.controlerWS)
-
-            temp = np.zeros(3)* self.ureg.cm
-            temp[0]=(self.distance+self.bodyRadius)
-            self.observations.append(self.rotation.dot(temp))
             print(self.distance)
             # set the motor speed based upon the PID
             self.driveMotors.set_speed(vel_2_pmw(self.controlerWS.to('cm/s').magnitude))
