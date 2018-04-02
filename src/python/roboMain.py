@@ -166,16 +166,16 @@ class Robot(object):
             
             # get gyroscope angle
             self.RealAngle = (self.bno.read_euler()[0])*self.ureg.degree
-
+            self.distance = self.distanceSensor.getDistance()
+            if isnan(self.distance):
+                self.distance = 120 
+            self.distance*= self.ureg.cm
             self.controlerWS[0] = self.pid_motors[0].update(
                 self.wheelSpeeds[0])
             self.controlerWS[1] = self.pid_motors[1].update(
                 self.wheelSpeeds[1])
             #print(self.wheelSpeeds.to('cm/s'),self.controlerWS)
-            self.distance = self.distanceSensor.getDistance()
-            if isnan(self.distance):
-                self.distance = 120 
-            self.distance*= self.ureg.cm
+
             temp = np.zeros(3)* self.ureg.cm
             temp[0]=(self.distance+self.bodyRadius)
             self.observations.append(self.rotation.dot(temp))
@@ -256,13 +256,13 @@ class Robot(object):
         d.line(
         (self.midScreen[0], self.midScreen[1], li[0], li[1]), fill=0)
         for ob in self.observations:
-            ob/=5*self.ureg.cm
+            ob/=2.5*self.ureg.cm
             ob=np.round(ob) + self.midScreen
             if ob[0]>=0 and ob[0]< self.papirus.width and ob[1]>=0 and ob[1]< self.papirus.height:
                 canvas.putpixel((int(ob[0]),int(ob[1])),0)
         self.papirus.display(canvas)
         self.papirus.update()
-
+        print(len(self.observations))
 
     def begin(self):
         self.sema = True
