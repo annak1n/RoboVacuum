@@ -75,6 +75,10 @@ class Robot(object):
         self.wheel2wheel = 26.5*self.ureg.cm
         self.weight = 5.0*self.ureg.kg
 
+
+        ##map related
+        self.observations=[]
+
         self.Wheel2RoboCsys = np.zeros((3, 2))
         '''
         self.Wheel2RoboCsys[0, 1] = 0.5*self.wheelRadius
@@ -106,7 +110,7 @@ class Robot(object):
         self.rotation = np.zeros((3, 3))
         self.position = np.zeros(3)
         self.location = np.array([200, 200])
-        self.observations = np.zeros((400, 400))
+
 
         self.rotation[2, 2] = 1
 
@@ -158,7 +162,7 @@ class Robot(object):
         while self.sema == True:  # the sema allows the threads to be closed by another process
             # get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             self.decodeSpeeds(dt)
-
+            
             # get gyroscope angle
             self.RealAngle = (self.bno.read_euler()[0])*self.ureg.degree
 
@@ -172,6 +176,9 @@ class Robot(object):
                 self.distance = 120 
             else:
                 self.distance*= self.ureg.cm
+            temp = np.zeros(3)
+            temp[0]=self.distance+self.bodyRadius
+            self.observations.append(self.rotation.dot(temp))
             #print(self.distance)
             # set the motor speed based upon the PID
             self.driveMotors.set_speed(vel_2_pmw(self.controlerWS.to('cm/s').magnitude))
@@ -241,6 +248,21 @@ class Robot(object):
             self.pid_motors[0].setPoint(vel_2_pmw(temp2[0]))
             self.pid_motors[1].setPoint(vel_2_pmw(temp2[1]))
             time.sleep(0.05)
+
+    def build_map(self):
+        canvas = copy(self.screen)
+        d = ImageDraw.Draw(canvas)
+        li = self.midScreen+self.rotation.dot(np.array([15, 0, 0]))
+        d.line(
+        (self.midScreen[0], self.midScreen[1], li[0], li[1]), fill=0)
+        for ob in self.observations:
+            ob/=5*self.ureg.cm
+            ob=np.round(ob) + self.midScreen
+            if ob[0]>=0 and ob[0]< self.midScreen[0] and ob[1]>=0 and ob[1]< self.midScreen[1]:
+                canvas[ob[0],ob[1]]=0
+        self.papirus.display(canvas)
+        self.papirus.update()
+
 
     def begin(self):
         self.sema = True
