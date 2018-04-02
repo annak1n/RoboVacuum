@@ -258,7 +258,7 @@ class Robot(object):
             ob/=5*self.ureg.cm
             ob=np.round(ob) + self.midScreen
             if ob[0]>=0 and ob[0]< self.midScreen[0] and ob[1]>=0 and ob[1]< self.midScreen[1]:
-                canvas[ob[0],ob[1]]=0
+                canvas.putpixel((ob[0],ob[1]),0)
         self.papirus.display(canvas)
         self.papirus.update()
 
