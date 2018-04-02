@@ -126,7 +126,7 @@ class Robot(object):
         self.encoder_values.update(self.clicks)
 
         # print(self.clicks)
-        self.wheelSpeeds = self.encoder_values.value()*self.rad_per_click*self.wheelRadius/self.MCfrequency
+        self.wheelSpeeds = self.encoder_values.value()*self.rad_per_click*self.wheelRadius*self.MCfrequency
         #print("e: ",self.wheelSpeeds)
         c = cos(self.RealAngle)
         s = sin(self.RealAngle)
