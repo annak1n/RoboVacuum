@@ -64,9 +64,9 @@ class Robot(object):
         self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
         self.OdoAngle = 0
         self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True)
-        P = 0.5
-        I = 0
-        D = 0
+        P = 1.5
+        I = 0.05
+        D = 0.0025
         self.pid_motors = [PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds), PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds)]
 
         self.bodyRadius = (32.0/2.0)*self.ureg.cm  # cm
@@ -92,7 +92,7 @@ class Robot(object):
         self.RoboCsys2Wheel[1, 2] = -(0.5*self.wheel2wheel)/self.wheelRadius
         '''
         self.velocity_desired = np.zeros(3)
-        self.MCfrequency = 50.0/self.ureg.second  # motor control frequency in hertz
+        self.MCfrequency = 25.0/self.ureg.second  # motor control frequency in hertz
         # rotary encoder clicks per rotation stored as invert to speed calc time
         self.rad_per_click = (2*pi/1024.0)*self.ureg.radians
         self.rotEncode = encoder.WheelEncoder()
