@@ -163,9 +163,12 @@ class Robot(object):
                 self.wheelSpeeds[0])
             self.controlerWS[1] = self.pid_motors[1].update(
                 self.wheelSpeeds[1])
-            self.distance = self.distanceSensor.getDistance() * self.ureg.cm
+            self.distance = self.distanceSensor.getDistance()
             if isnan(self.distance):
-                self.distance = 120 *self.ureg.cm
+                self.distance = 120 
+            else:
+                self.distance*= self.ureg.cm
+            
             # set the motor speed based upon the PID
             self.driveMotors.set_speed(self.controlerWS.to('cm/s').magnitude)
             new_time = time.clock() *self.ureg.seconds
