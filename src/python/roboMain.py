@@ -63,7 +63,7 @@ class Robot(object):
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
         self.OdoAngle = 0
-        self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True)
+        self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True,unit=self.ureg.radians)
         P = 1.5
         I = 0.05
         D = 0.0025
@@ -85,12 +85,12 @@ class Robot(object):
             (self.wheelRadius/(0.5*self.wheel2wheel))
         '''
         self.RoboCsys2Wheel = np.zeros((2, 3))
-        '''
-        self.RoboCsys2Wheel[0, 0] = 1/self.wheelRadius
-        self.RoboCsys2Wheel[1, 0] = 1/self.wheelRadius
-        self.RoboCsys2Wheel[0, 2] = (0.5*self.wheel2wheel)/self.wheelRadius
-        self.RoboCsys2Wheel[1, 2] = -(0.5*self.wheel2wheel)/self.wheelRadius
-        '''
+
+        self.RoboCsys2Wheel[0, 0] = 1/(self.wheelRadius.to('cm').magnitude)
+        self.RoboCsys2Wheel[1, 0] = 1/(self.wheelRadius.to('cm').magnitude)
+        self.RoboCsys2Wheel[0, 2] = ((0.5*self.wheel2wheel)/self.wheelRadius).to('dimensionless').magnitude
+        self.RoboCsys2Wheel[1, 2] = (-(0.5*self.wheel2wheel)/self.wheelRadius).to('dimensionless').magnitude
+
         self.velocity_desired = np.zeros(3)
         self.MCfrequency = 25.0/self.ureg.second  # motor control frequency in hertz
         # rotary encoder clicks per rotation stored as invert to speed calc time
@@ -214,13 +214,13 @@ class Robot(object):
     def updateSpeedAngle(self, setSpeed, setAngle):
 
         velocity = np.zeros(3)
-        self.pid_angle.setPoint(self.setAngle)
+        #self.pid_angle.setPoint(self.setAngle.to('radians'))
         self.pid_angle.update(self.position[2])
-        while abs(self.pid_angle.error) > pi/180:
+        while abs(self.pid_angle.error) > 5*self.ureg.degrees:
             velocity[2] = self.pid_angle.update(self.position[2])
             temp2 = self.RoboCsys2Wheel.dot(velocity)
-            self.pid_motors[0].setPoint(temp2[0])
-            self.pid_motors[1].setPoint(temp2[1])
+            self.pid_motors[0].setPoint(vel_2_pmw(temp2[0]))
+            self.pid_motors[1].setPoint(vel_2_pmw(temp2[1]))
             print(self.pid_angle.error)
             wiringpi.delayMicroseconds(int((0.01)*1e6))
 
@@ -233,14 +233,13 @@ class Robot(object):
         velocity = np.zeros(3)
 
         self.pid_angle.error = 100
-        self.RoboCsys2Wheel
-        limit = (2*pi)/180
+        limit = 5*self.ureg.degrees
         while abs(self.pid_angle.error) > limit:
             print(180*self.position[2]/pi)
-            velocity[2] = self.pid_angle.update(self.position[2])
+            velocity[2] = self.pid_angle.update(self.RealAngle)
             temp2 = self.RoboCsys2Wheel.dot(velocity)
-            self.pid_motors[0].setPoint(temp2[0])
-            self.pid_motors[1].setPoint(temp2[1])
+            self.pid_motors[0].setPoint(vel_2_pmw(temp2[0]))
+            self.pid_motors[1].setPoint(vel_2_pmw(temp2[1]))
             time.sleep(0.05)
 
     def begin(self):
