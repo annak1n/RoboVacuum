@@ -155,6 +155,7 @@ class Robot(object):
         self.decodeSpeeds(dt)
         time.sleep(0.01)
         self.position[:] = 0
+        self.driveMotors.set_speed([64,64])
         while self.sema == True:  # the sema allows the threads to be closed by another process
             # get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             self.decodeSpeeds(dt)
@@ -174,7 +175,7 @@ class Robot(object):
                 self.distance*= self.ureg.cm
             print(self.distance)
             # set the motor speed based upon the PID
-            self.driveMotors.set_speed(vel_2_pmw(self.controlerWS.to('cm/s').magnitude))
+            #self.driveMotors.set_speed(vel_2_pmw(self.controlerWS.to('cm/s').magnitude))
             new_time = time.clock() *self.ureg.seconds
             #print("elapsed",new_time-old_time)
             sleep = int((dt-(new_time-old_time)).to('microseconds').magnitude)
