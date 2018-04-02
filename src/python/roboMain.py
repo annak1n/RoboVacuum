@@ -176,7 +176,7 @@ class Robot(object):
                 self.distance = 120 
             self.distance*= self.ureg.cm
             temp = np.zeros(3)* self.ureg.cm
-            temp[0]=(self.distance+self.bodyRadius
+            temp[0]=(self.distance+self.bodyRadius)
             self.observations.append(self.rotation.dot(temp))
             #print(self.distance)
             # set the motor speed based upon the PID
