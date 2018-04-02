@@ -61,9 +61,9 @@ class Robot(object):
         self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
         self.OdoAngle = 0
         self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True)
-        P = 4.0*.6
+        P = 4
         I = 0.5
-        D = 0.01
+        D = 0.0
         self.pid_motors = [PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds), PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds)]
 
         self.bodyRadius = (32.0/2.0)*self.ureg.cm  # cm
@@ -163,7 +163,7 @@ class Robot(object):
                 self.wheelSpeeds[0])
             self.controlerWS[1] = self.pid_motors[1].update(
                 self.wheelSpeeds[1])
-            print(self.wheelSpeeds,self.controlerWS)
+            print(self.wheelSpeeds.to('cm/s'),self.controlerWS)
             self.distance = self.distanceSensor.getDistance()
             if isnan(self.distance):
                 self.distance = 120 
@@ -173,7 +173,7 @@ class Robot(object):
             # set the motor speed based upon the PID
             self.driveMotors.set_speed(self.controlerWS.to('cm/s').magnitude)
             new_time = time.clock() *self.ureg.seconds
-            print("elapsed",new_time-old_time)
+            #print("elapsed",new_time-old_time)
             sleep = int((dt-(new_time-old_time)).to('microseconds').magnitude)
             print(sleep)
             if sleep > 0:
