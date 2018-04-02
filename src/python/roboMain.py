@@ -134,7 +134,7 @@ class Robot(object):
         self.rotation[1, 1] = c
         self.rotation[1, 0] = s
         self.rotation[0, 1] = -s
-        velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
+        #velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
         # print(self.wheelSpeeds)
         # velocity[2]/=3.162
         self.position += dt*velocity
@@ -163,17 +163,19 @@ class Robot(object):
                 self.wheelSpeeds[0])
             self.controlerWS[1] = self.pid_motors[1].update(
                 self.wheelSpeeds[1])
+            print(self.wheelSpeeds,self.controlerWS)
             self.distance = self.distanceSensor.getDistance()
             if isnan(self.distance):
                 self.distance = 120 
             else:
                 self.distance*= self.ureg.cm
-            
+            print(self.distance)
             # set the motor speed based upon the PID
             self.driveMotors.set_speed(self.controlerWS.to('cm/s').magnitude)
             new_time = time.clock() *self.ureg.seconds
 
             sleep = int((dt-(new_time-old_time)).to('microseconds').magnitude)
+            print(sleep)
             if sleep > 0:
                 wiringpi.delayMicroseconds(sleep)
             else:
