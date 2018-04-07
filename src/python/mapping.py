@@ -11,7 +11,10 @@ class observation:
         self.position = position
     def OPP(self,x,theta):
         cone = np.exp((-1/sqrt(2))*((theta)/(10*ureg.degrees))**2)
-        incidence = 0.8*np.exp((-1/sqrt(2))*((self.distance-x).to('cm').magnitude/(2.5))**2) - 0.4
+        if self.distance>119*ureg.cm:
+            incidence=0.1*np.ones(x.shape)
+        else:
+            incidence = 0.8*np.exp((-1/sqrt(2))*((self.distance-x).to('cm').magnitude/(2.5))**2) - 0.4
         opp=0.5 + cone*incidence
         m1 = (x>self.distance)*(opp<0.5)
         opp[m1]=0.5
