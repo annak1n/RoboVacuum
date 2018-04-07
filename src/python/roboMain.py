@@ -253,16 +253,14 @@ class Robot(object):
 
         self.pid_angle.setPoint(angle)
         velocity = np.zeros(3)
-
+        self.pid_motors[0].setPoint(vel_2_pmw(5)*self.ureg.cm/self.ureg.seconds  )
+        self.pid_motors[1].setPoint(vel_2_pmw(-5)*self.ureg.cm/self.ureg.seconds)
         self.pid_angle.error = 100
         limit = 5*self.ureg.degrees
         while abs(self.pid_angle.error) > limit:
-            
-            velocity[2] = self.pid_angle.update(self.RealAngle)
-            temp2 = 0.25*self.RoboCsys2Wheel.dot(velocity)
-            self.pid_motors[0].setPoint(vel_2_pmw(temp2[0])*self.ureg.cm/self.ureg.seconds  )
-            self.pid_motors[1].setPoint(vel_2_pmw(temp2[1])*self.ureg.cm/self.ureg.seconds)
-            time.sleep(0.05)
+            time.sleep(0.001)
+        self.pid_motors[0].setPoint(0*self.ureg.cm/self.ureg.seconds  )
+        self.pid_motors[1].setPoint(0*self.ureg.cm/self.ureg.seconds)
         return True
 
     def build_map(self):
