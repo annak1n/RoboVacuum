@@ -23,5 +23,8 @@ r.random_run()
 time.sleep(5)
 #r.stopBrush()
 r.stop()
+import matplotlib.pyplot as plt
 
+plt.imshow(r.map.map)
+plt.show()
 print('End')
