@@ -17,6 +17,8 @@ def GetAngleDifference(A, B):
     '''
 
     '''
+    A.ito('radians')
+    B.ito('radians')
     difference = min(A - B,2*pi -A + B,key=abs)
     '''while difference < -pi:
         difference += 2.0*pi

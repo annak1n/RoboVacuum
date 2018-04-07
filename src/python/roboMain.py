@@ -17,16 +17,19 @@ from control.pid import PID
 from accelerometer.BNO055 import BNO055
 import ADC.IR_distance as DM
 from threading import Semaphore
-from math import cos, sin, pi, radians, isnan
+from math import cos, sin, pi, radians, isnan,exp,sqrt
 from rotary_encoder import wheel_encoder as encoder
 from math import pi, copysign, atan2
 import wiringpi
 from filters.lag import lag_filter
-
+from math import exp,sqrt
 from copy import copy
+import random
+from mapping import mapper, observation
 
 def vel_2_pmw(v):
     return(v*6.27)
+
 
 
 class Robot(object):
@@ -74,20 +77,18 @@ class Robot(object):
         self.wheelCircumference = self.wheelRadius*2.0*pi
         self.wheel2wheel = 26.5*self.ureg.cm
         self.weight = 5.0*self.ureg.kg
-
+        self.map = mapper((2000,2000),pixel_width=2.5*self.ureg.cm)
 
         ##map related
         self.observations=[]
 
         self.Wheel2RoboCsys = np.zeros((3, 2))
-        '''
-        self.Wheel2RoboCsys[0, 1] = 0.5*self.wheelRadius
-        self.Wheel2RoboCsys[0, 0] = 0.5*self.wheelRadius
-        self.Wheel2RoboCsys[2, 0] = 0.5 * \
-            (self.wheelRadius/(0.5*self.wheel2wheel))
-        self.Wheel2RoboCsys[2, 0] = -0.5 * \
-            (self.wheelRadius/(0.5*self.wheel2wheel))
-        '''
+        
+        self.Wheel2RoboCsys[0, 1] = (0.5*self.wheelRadius).to('cm').magnitude
+        self.Wheel2RoboCsys[0, 0] = (0.5*self.wheelRadius).to('cm').magnitude
+        self.Wheel2RoboCsys[2, 0] = 0.5 * (self.wheelRadius/(0.5*self.wheel2wheel)).to('dimensionless').magnitude
+        self.Wheel2RoboCsys[2, 0] = -0.5 * (self.wheelRadius/(0.5*self.wheel2wheel)).to('dimensionless').magnitude
+        
         self.RoboCsys2Wheel = np.zeros((2, 3))
 
         self.RoboCsys2Wheel[0, 0] = 1/(self.wheelRadius.to('cm').magnitude)
@@ -113,6 +114,8 @@ class Robot(object):
 
 
         self.rotation[2, 2] = 1
+        self.robo_speed=0
+
 
         self.wheelSpeeds = np.zeros(2)
         self.encoder_values = lag_filter(1/self.MCfrequency,0.5*self.ureg.second,0.95,np.zeros((2))*self.ureg.dimensionless)
@@ -142,7 +145,11 @@ class Robot(object):
         self.rotation[1, 1] = c
         self.rotation[1, 0] = s
         self.rotation[0, 1] = -s
-        #velocity = self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
+        self.robo_speed=np.mean(self.wheelSpeeds)
+        velocity = np.dot(self.rotation, np.array([self.robo_speed,0]))
+        self.position += dt*velocity
+        
+        # self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
         # print(self.wheelSpeeds)
         # velocity[2]/=3.162
         #self.position += dt*velocity
@@ -159,7 +166,7 @@ class Robot(object):
         # this resets the encoders to zero to remove any initial errors
         self.decodeSpeeds(dt)
         time.sleep(0.01)
-        self.position[:] = 0
+        self.position *= 0
         while self.sema == True:  # the sema allows the threads to be closed by another process
             # get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             self.decodeSpeeds(dt)
@@ -173,6 +180,7 @@ class Robot(object):
                 self.distance*= self.ureg.cm
                 temp = np.zeros(3)* self.ureg.cm
                 temp[0]=(self.distance+self.bodyRadius)
+                self.map.update(observation(self.distance+self.bodyRadius,self.RealAngle,position=self.position))
                 self.observations.append(self.rotation.dot(temp))
             self.controlerWS[0] = self.pid_motors[0].update(
                 self.wheelSpeeds[0])
@@ -221,8 +229,8 @@ class Robot(object):
     def updateSpeedAngle(self, setSpeed, setAngle):
 
         velocity = np.zeros(3)
-        #self.pid_angle.setPoint(self.setAngle.to('radians'))
-        self.pid_angle.update(self.position[2])
+        self.pid_angle.setPoint(self.setAngle.to('radians'))
+        self.pid_angle.update(self.RealAngle)
         while abs(self.pid_angle.error) > 5*self.ureg.degrees:
             velocity[2] = self.pid_angle.update(self.position[2])
             temp2 = self.RoboCsys2Wheel.dot(velocity)
@@ -234,6 +242,11 @@ class Robot(object):
         self.pid_motors[0].setPoint(setSpeed)
         self.pid_motors[1].setPoint(setSpeed)
 
+
+    def updateSpeed(self, speed):
+        self.pid_motors[0].setPoint(vel_2_pmw(speed))
+        self.pid_motors[1].setPoint(vel_2_pmw(speed))
+
     def turnToAngle(self, angle):
 
         self.pid_angle.setPoint(angle)
@@ -242,12 +255,13 @@ class Robot(object):
         self.pid_angle.error = 100
         limit = 5*self.ureg.degrees
         while abs(self.pid_angle.error) > limit:
-            print(180*self.position[2]/pi)
+            
             velocity[2] = self.pid_angle.update(self.RealAngle)
             temp2 = self.RoboCsys2Wheel.dot(velocity)
             self.pid_motors[0].setPoint(vel_2_pmw(temp2[0]))
             self.pid_motors[1].setPoint(vel_2_pmw(temp2[1]))
             time.sleep(0.05)
+        return True
 
     def build_map(self):
         canvas = copy(self.screen)
@@ -318,6 +332,25 @@ class Robot(object):
             else:
                 angle = 0
                 delta = pi/2
+
+    def random_run(self):
+
+        direction = random.uniform(0,360)*self.ureg.degrees
+
+        t1 = time.time()
+        dist_flop = True
+        speed = 25*self.ureg.cm
+        X=self.turnToAngle(direction)
+        while time.time()-t1 < 100:
+
+            if self.distance < 10*self.ureg.cm:
+                direction = random.uniform(0,360)*self.ureg.degrees
+                self.turnToAngle(direction)
+                if self.distance > 10*self.ureg.cm:
+                    self.updateSpeed(speed)
+
+
+                
 
     def stop(self):
         self.sema = False
