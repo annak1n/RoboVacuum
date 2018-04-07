@@ -55,4 +55,4 @@ class mapper:
         Y = pv[0][:,1]
         old=self.map[X,Y]
         self.map[X,Y] = (pv[1]*old)/(pv[1]*old +(1-pv[1])*(1-old))
-        print(time()-t1)
+        print(time()-t1, observation.position)
