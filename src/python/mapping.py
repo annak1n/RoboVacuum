@@ -7,7 +7,7 @@ from time import time
 class observation:
     def __init__(self,distance,angle, position = np.array([0,0])*ureg.cm):
         self.distance =distance
-        self.angle = pi/2 + angle.to('radians')
+        self.angle = -pi/2 + angle.to('radians')
         self.position = position
     def OPP(self,x,theta):
         cone = np.exp((-1/sqrt(2))*((theta)/(10*ureg.degrees))**2)
