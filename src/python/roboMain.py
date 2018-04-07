@@ -67,8 +67,8 @@ class Robot(object):
         self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
         self.OdoAngle = 0
         self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True,unit=self.ureg.radians)
-        P = 1.5
-        I = 0.05
+        P = 1.25
+        I = 0.075
         D = 0.0025
         self.pid_motors = [PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds), PID(P=P, I=I, D=D, unit = self.ureg.cm/self.ureg.seconds)]
 
