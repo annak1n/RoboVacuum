@@ -169,7 +169,6 @@ class Robot(object):
         # this resets the encoders to zero to remove any initial errors
         self.decodeSpeeds(dt)
         time.sleep(0.01)
-        self.position *= 0
         while self.sema == True:  # the sema allows the threads to be closed by another process
             # get the x-y-phi rates of change from encoder, aswell as the wheel velocities
             self.decodeSpeeds(dt)
