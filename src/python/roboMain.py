@@ -61,7 +61,7 @@ class Robot(object):
         self.distanceSensor = DM.distanceMeas(
             calibrationFile='calibration_data.db')
         self.minDistance = 7.5  # distance at which robot stops from wall
-        self.distance = 0
+        self.distance = 0*self.uref.cm
         self.speed = 0
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
@@ -346,7 +346,7 @@ class Robot(object):
         self.updateSpeed(speed)
         while time.time()-t1 < 100:
 
-            if self.distance < 10*self.ureg.cm:
+            if self.distance < (10*self.ureg.cm):
                 direction = random.uniform(0,360)*self.ureg.degrees
                 self.turnToAngle(direction)
                 #if self.distance > 10*self.ureg.cm:
