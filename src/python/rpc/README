@@ -1,13 +1,11 @@
 This is a first cut at an RPC server to let python code invoke class methods on other CPU cores.
 
-On initialization, user code must create a server instance on each core. At start up the server 
-opens a TCP connection to each of its peers.  Client code uses these connections to convey RPC 
-requests between the CPU cores.
+On initialization, user code must create a server instance on each core. 
 
 The server is a python thread which is spawned by the constructor of the server class.
 
 The user must add explicit imports in the file rpcserver.py to define the classes that can be 
-accessed on remote cores. The example given is a class called MyClass with a method foo(), this
+accessed on remote cores. The example given is a class called MyClass, this
  is defined in the file test.py and is explicitly imported in the file rpcserver.py by line 
 "from test import MyClass"
 
@@ -16,7 +14,7 @@ destination CPU core and the type of the message, and a nested  message body con
 the RPC request which identifies the module name, the function name, and any parameters that 
 should be passed to the function.
 
-For transit through the TCP connnection the dict is converted to a JSON string, and this is in 
+For transit the dict is converted to a JSON string, and this is in 
 turn wrapped in a netstring encoding. The netsting coding simply prepends a header that specifies 
 the length of the JSON payload and makes it easier for the server to extract discreet messages 
 when receiving. The netstring coding is useful since multiple clients may be queueing RPC 
@@ -31,6 +29,7 @@ The approach has the advantage of making the method parameters transparent to th
 the server needs only the module and function name, and only the method itself needs to know 
 about the specific parameters it accepts.
 
+There are two varients of the RCP send function, an asynchronour version, and a synchronous version that waits for a return value from the method invoked on the remote core.
 
 So what are all these files ?
 
@@ -38,8 +37,7 @@ So what are all these files ?
 These files are placeholders for user application code, they simply create an RPC server 
 and then (with the exception of core0.py) do nothing for now.
 
-core0.py additionally by way of example invokes the method foo() belonging to class MyClass 
-and requests it to be run on core 3.
+core0.py additionally by way of example invokes the methods belonging to class MyClass.
 
 2. test.py
 This contains the definition of MyClass
