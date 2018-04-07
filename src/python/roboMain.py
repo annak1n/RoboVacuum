@@ -342,14 +342,16 @@ class Robot(object):
         t1 = time.time()
         dist_flop = True
         speed = 25*self.ureg.cm/self.ureg.s
-        X=self.turnToAngle(direction)
+        #X=self.turnToAngle(direction)
+        self.updateSpeed(speed)
         while time.time()-t1 < 100:
 
             if self.distance < 10*self.ureg.cm:
                 direction = random.uniform(0,360)*self.ureg.degrees
                 self.turnToAngle(direction)
-                if self.distance > 10*self.ureg.cm:
-                    self.updateSpeed(speed)
+                #if self.distance > 10*self.ureg.cm:
+            self.updateSpeed(speed)
+            time.sleep(0.02)
 
 
                 
