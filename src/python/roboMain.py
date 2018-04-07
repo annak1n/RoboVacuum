@@ -181,11 +181,9 @@ class Robot(object):
                 self.distance = 120 * self.ureg.cm
             else:
                 self.distance*= self.ureg.cm
-                temp = np.zeros(3)* self.ureg.cm
-                temp[0]=(self.distance+self.bodyRadius)
                 self.map.update(observation(self.distance+self.bodyRadius,self.RealAngle,position=self.position))
-                self.observations.append(self.rotation.dot(temp))
-            print(self.wheelSpeeds)
+                
+            
             self.controlerWS[0] = self.pid_motors[0].update(
                 self.wheelSpeeds[0])
             self.controlerWS[1] = self.pid_motors[1].update(
@@ -262,8 +260,8 @@ class Robot(object):
             
             velocity[2] = self.pid_angle.update(self.RealAngle)
             temp2 = self.RoboCsys2Wheel.dot(velocity)
-            self.pid_motors[0].setPoint(vel_2_pmw(temp2[0]))
-            self.pid_motors[1].setPoint(vel_2_pmw(temp2[1]))
+            self.pid_motors[0].setPoint(vel_2_pmw(temp2[0])*self.ureg.cm/self.ureg.seconds  )
+            self.pid_motors[1].setPoint(vel_2_pmw(temp2[1])*self.ureg.cm/self.ureg.seconds)
             time.sleep(0.05)
         return True
 
@@ -343,7 +341,7 @@ class Robot(object):
 
         t1 = time.time()
         dist_flop = True
-        speed = 25*self.ureg.cm
+        speed = 25*self.ureg.cm/self.ureg.s
         X=self.turnToAngle(direction)
         while time.time()-t1 < 100:
 
