@@ -20,9 +20,10 @@ r.startBrush()
 r.random_run()
 #r.logDistance(1)
 #
-time.sleep(5)
+
 #r.stopBrush()
 r.stop()
+r.stopBrush()
 import matplotlib.pyplot as plt
 
 plt.imshow(r.map.map)
