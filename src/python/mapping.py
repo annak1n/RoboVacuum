@@ -19,6 +19,8 @@ class observation:
         return opp
     
     def global_OPP(self, coarse=5*ureg.cm):
+        print(self.distance)
+        print(coarse)
         rect = int((round(self.distance + 2*2.5*ureg.cm)/coarse + 1).magnitude)
         width = int((tan((10*ureg.degrees).to('radians'))*rect))+1
         X, Y = np.meshgrid(range(1,rect), range(-width,width+1))*coarse
@@ -27,7 +29,7 @@ class observation:
         return mip
         
     def global_OPP_ptcl(self,coarse=5*ureg.cm):
-        mip = self.global_OPP(coarse=5*ureg.cm)
+        mip = self.global_OPP(coarse=coarse)
         MASK = (mip<0.45) +  (mip>0.55)
         vals = mip[MASK]
         coords = np.argwhere(MASK)
