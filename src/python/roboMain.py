@@ -345,7 +345,7 @@ class Robot(object):
         self.updateSpeed(speed)
         while time.time()-t1 < 10:
 
-            if self.distance < (10*self.ureg.cm):
+            if self.distance < (15*self.ureg.cm):
                 direction = random.uniform(0,360)*self.ureg.degrees
                 self.updateSpeed(0*self.ureg.cm/self.ureg.s)
                 #self.turnToAngle(direction)
