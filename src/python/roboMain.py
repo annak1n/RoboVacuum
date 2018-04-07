@@ -185,6 +185,7 @@ class Robot(object):
                 temp[0]=(self.distance+self.bodyRadius)
                 self.map.update(observation(self.distance+self.bodyRadius,self.RealAngle,position=self.position))
                 self.observations.append(self.rotation.dot(temp))
+            print(self.wheelSpeeds)
             self.controlerWS[0] = self.pid_motors[0].update(
                 self.wheelSpeeds[0])
             self.controlerWS[1] = self.pid_motors[1].update(
