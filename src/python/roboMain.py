@@ -146,8 +146,10 @@ class Robot(object):
         self.rotation[1, 1] = c
         self.rotation[1, 0] = s
         self.rotation[0, 1] = -s
+        R = self.rotation[0:2,0:2]
         self.robo_speed=np.mean(self.wheelSpeeds)
-        velocity = np.dot(self.rotation[0:2,0:2], np.array([self.robo_speed,0]))
+        vec = np.array([self.robo_speed,0])
+        velocity = np.dot( R, vec)
         self.position += dt*velocity
         
         # self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
