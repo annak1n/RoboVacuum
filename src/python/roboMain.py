@@ -259,7 +259,7 @@ class Robot(object):
         limit = 5*self.ureg.degrees
         while abs(self.pid_angle.error) > limit:
             time.sleep(0.001)
-            self.pid_angle.upate(self.RealAngle)
+            self.pid_angle.update(self.RealAngle)
         self.pid_motors[0].setPoint(0*self.ureg.cm/self.ureg.seconds  )
         self.pid_motors[1].setPoint(0*self.ureg.cm/self.ureg.seconds)
         return True
