@@ -61,7 +61,7 @@ class Robot(object):
         self.distanceSensor = DM.distanceMeas(
             calibrationFile='calibration_data.db')
         self.minDistance = 7.5  # distance at which robot stops from wall
-        self.distance = 0*self.uref.cm
+        self.distance = 0*self.ureg.cm
         self.speed = 0
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
