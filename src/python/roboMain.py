@@ -13,7 +13,7 @@ import Queue
 #from threading import Thread
 import thread
 import numpy as np
-from control.pid import PID
+from control.pid import PID, GetAngleDifference
 from accelerometer.BNO055 import BNO055
 import ADC.IR_distance as DM
 from threading import Semaphore
@@ -256,10 +256,11 @@ class Robot(object):
         self.pid_motors[0].setPoint(vel_2_pmw(5)*self.ureg.cm/self.ureg.seconds  )
         self.pid_motors[1].setPoint(vel_2_pmw(-5)*self.ureg.cm/self.ureg.seconds)
         self.pid_angle.error = 100
-        limit = 5*self.ureg.degrees
-        while abs(self.pid_angle.error) > limit:
+        limit = 15*self.ureg.degrees
+        
+        while abs(GetAngleDifference(self.RealAngle,angle)) > limit:
             time.sleep(0.001)
-            self.pid_angle.update(self.RealAngle)
+            #self.pid_angle.update()
         self.pid_motors[0].setPoint(0*self.ureg.cm/self.ureg.seconds  )
         self.pid_motors[1].setPoint(0*self.ureg.cm/self.ureg.seconds)
         return True
