@@ -78,7 +78,7 @@ class Robot(object):
         self.wheel2wheel = 26.5*self.ureg.cm
         self.weight = 5.0*self.ureg.kg
         self.map = mapper((2000,2000),pixel_width=2.5*self.ureg.cm)
-
+        self.position = np.array([1000,1000])
         ##map related
         self.observations=[]
 
@@ -109,7 +109,7 @@ class Robot(object):
         self.stopDistance = False
         self.clicks = np.zeros(2)
         self.rotation = np.zeros((3, 3))
-        self.position = np.zeros(3)
+        
         self.location = np.array([200, 200])
 
 
@@ -141,12 +141,13 @@ class Robot(object):
         #print("e: ",self.wheelSpeeds)
         c = cos(self.RealAngle)
         s = sin(self.RealAngle)
+
         self.rotation[0, 0] = c
         self.rotation[1, 1] = c
         self.rotation[1, 0] = s
         self.rotation[0, 1] = -s
         self.robo_speed=np.mean(self.wheelSpeeds)
-        velocity = np.dot(self.rotation, np.array([self.robo_speed,0]))
+        velocity = np.dot(self.rotation[0:2,0:2], np.array([self.robo_speed,0]))
         self.position += dt*velocity
         
         # self.rotation.dot(self.Wheel2RoboCsys).dot(self.wheelSpeeds)
@@ -232,7 +233,7 @@ class Robot(object):
         self.pid_angle.setPoint(self.setAngle.to('radians'))
         self.pid_angle.update(self.RealAngle)
         while abs(self.pid_angle.error) > 5*self.ureg.degrees:
-            velocity[2] = self.pid_angle.update(self.position[2])
+            #velocity[2] = self.pid_angle.update(self.position[2])
             temp2 = self.RoboCsys2Wheel.dot(velocity)
             self.pid_motors[0].setPoint(vel_2_pmw(temp2[0]))
             self.pid_motors[1].setPoint(vel_2_pmw(temp2[1]))
