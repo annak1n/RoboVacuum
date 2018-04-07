@@ -180,7 +180,7 @@ class Robot(object):
                 self.distance = 120 * self.ureg.cm
             else:
                 self.distance*= self.ureg.cm
-                self.map.update(observation(self.distance+self.bodyRadius,self.RealAngle,position=self.position))
+            self.map.update(observation(self.distance+self.bodyRadius,self.RealAngle,position=self.position))
                 
             
             self.controlerWS[0] = self.pid_motors[0].update(
