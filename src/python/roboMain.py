@@ -259,7 +259,7 @@ class Robot(object):
         while abs(self.pid_angle.error) > limit:
             
             velocity[2] = self.pid_angle.update(self.RealAngle)
-            temp2 = self.RoboCsys2Wheel.dot(velocity)
+            temp2 = 0.25*self.RoboCsys2Wheel.dot(velocity)
             self.pid_motors[0].setPoint(vel_2_pmw(temp2[0])*self.ureg.cm/self.ureg.seconds  )
             self.pid_motors[1].setPoint(vel_2_pmw(temp2[1])*self.ureg.cm/self.ureg.seconds)
             time.sleep(0.05)
