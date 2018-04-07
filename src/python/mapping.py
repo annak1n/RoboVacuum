@@ -1,8 +1,8 @@
 from math import exp,sqrt,atan, tan,cos,sin
-from pint import UnitRegistry
+from my_pint import ureg
 import numpy as np
 from time import time
-ureg = UnitRegistry()
+
 
 class observation:
     def __init__(self,distance,angle, position = np.array([0,0])*ureg.cm):

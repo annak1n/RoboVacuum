@@ -1,4 +1,4 @@
-from pint import UnitRegistry
+from my_pint import ureg
 import motor_control.motor_class as MC
 import time
 import os
@@ -45,7 +45,7 @@ class Robot(object):
         - Connection to accelerometer BNO055
         - Connection to distance sensor
         '''
-        self.ureg = UnitRegistry()
+        self.ureg = ureg
         self.driveMotors = MC.motor_group([0x61, 0x61], [1, 3], [1, -1])
         self.brushMotors = MC.motor_group(
             [0x60, 0x60, 0X61], [1, 3, 4], [-1, 1, 1])
