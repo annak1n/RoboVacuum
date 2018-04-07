@@ -148,7 +148,7 @@ class Robot(object):
         self.rotation[0, 1] = -s
         R = self.rotation[0:2,0:2]
         self.robo_speed=np.mean(self.wheelSpeeds)
-        vec = np.array([self.robo_speed,0])
+        vec = np.array([self.robo_speed.to('cm/s').magnitude,0])*(self.ureg.cm/self.ureg.s)
         velocity = np.dot( R, vec)
         self.position += dt*velocity
         
