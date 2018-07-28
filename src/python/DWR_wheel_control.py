@@ -10,13 +10,15 @@ import wiringpi
 import time
 import shelve
 import thread
+from scipy.interpolate import interp1d
+
 class pwm_input:
     def convert(self,v):
         return(v*6.27)
 
 class wheel_control:
 
-    def __init__(self,clicks_per_rotations= 1024.0, PID_values={'P':1.25,'I':0.75,'D':0.0025}, wheel_radius=3.0*ureg.cm,controler_frequency=50.0/ureg.second, pwm_input_converter = pwm_input):
+    def __init__(self,clicks_per_rotations= 1024.0, PID_values={'P':1.25,'I':0.75,'D':0.0025}, wheel_radius=3.0*ureg.cm,controler_frequency=50.0/ureg.second, pwm_input_converter = pwm_input, calibration = True):
         ''' Class to control the wheels of a DWR robot
         Each wheel has an independent PID controller
         The velocities of the wheels are determined using hub encoders, this signal is filtered to reduce noise from high sample rates
@@ -50,6 +52,14 @@ class wheel_control:
         self.pwm_input_converter = pwm_input_converter
 
         self.non_stop=True
+        self.load_calibration()
+
+    def load_calibration(self,file ='wheel_calibration.db'):
+        db = shelve.open(file)
+        calibration=db['wheel_calib_data']
+        self.interpolator=[interp1d(calibration[:,0], calibration[:,1], kind='cubic',bounds_error=False),
+                           interp1d(calibration[:,0], calibration[:,2], kind='cubic',bounds_error=False)]
+
 
     def set_speed(self,wheel_velocities):
         '''Function used to set the speed called externally
@@ -78,7 +88,9 @@ class wheel_control:
             self.encoder_values.value()[1])
 
     def set_wheel_velocties(self):
-        self.driveMotors.set_speed(pwm_input_converter.convert(self.controlerWS.to('cm/s').magnitude))
+        speed=np.array([self.interpolator(self.controlerWS.to('cm/s')[0].magnitude)
+            ,self.interpolator(self.controlerWS.to('cm/s')[1].magnitude)])
+        self.driveMotors.set_speed(speed)
 
 
     def run_motor_control(self,A):
@@ -96,7 +108,7 @@ class wheel_control:
     def stop(self):
         self.non_stop=False
 
-    def self_calibrate(self,steps=5):
+    def self_calibrate(self,steps=5,file ='wheel_calibration.db'):
 
         direction=1
 
@@ -120,8 +132,10 @@ class wheel_control:
 
             #direction *=-1
         self.driveMotors.set_speed([0,0])
-
-        print(counts/refresh)
+        calib_data = np.array([speeds,counts/refresh])
+        print(calib_data)
+        db = shelve.open(file)
+        db['wheel_calib_data']=calib_data
 
 
 
