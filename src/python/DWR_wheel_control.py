@@ -38,7 +38,7 @@ class wheel_control:
         I = PID_values.get('I',0)
         D = PID_values.get('D',0)
         self.pid_motors = [PID(P=P, I=I, D=D, unit = ureg.cm/ureg.seconds), PID(P=P, I=I, D=D, unit = ureg.cm/ureg.seconds)]
-        self.click = np.zeros((2))
+        self.clicks = np.zeros((2))
         self.encoder_values = lag_filter(self.time_step,0.5*ureg.second,0.95,np.zeros((2))*ureg.dimensionless)
         self.wheel_velocities_measured = np.zeros((2))
         self.wheel_velocities_controller = np.zeros((2))
@@ -66,6 +66,7 @@ class wheel_control:
     def measure_wheel_velocity(self):
 
         self.clicks = np.copysign(self.rotEncode.read_counters(self.clicks), self.wheel_velocities_desired)
+        #print(self.clicks)
         self.encoder_values.update(self.clicks)
         self.click_per_second = self.encoder_values.value()/self.time_step
         self.wheel_velocities_measured = self.encoder_values.value()*self.cm_per_click*self.frequency
@@ -84,7 +85,7 @@ class wheel_control:
         dt = self.time_step
         
         while self.non_stop:
-            interval = (time.time() + dt)*ureg.seconds
+            interval = (time.time()*ureg.seconds + dt)
             self.measure_wheel_velocity()
             self.update_pid()
             self.set_wheel_velocties()
@@ -102,19 +103,23 @@ class wheel_control:
         speeds = np.linspace(0,255,num=steps)
         counts= np.zeros((2,steps))
         refresh = np.zeros((2,steps))
-        self.guidence = thread.start_new_thread(self.run_motor_control, (1,))
+        #self.guidence = thread.start_new_thread(self.run_motor_control, (1,))
         i=0
-        for speed in speeds:
-            self.driveMotors.set_speed([speed*direction,speed*direction])
-            time.sleep(1)
+        for i in range(steps):
+            self.driveMotors.set_speed([speeds[i]*direction,speeds[i]*direction])
             t1 = time.time()
+            self.rotEncode.read_counters(np.array([0,0]))
             while time.time() < t1+3:
-                counts[0,i]+= self.click_per_second[0,i]
-                refresh[0,i]+=1
-                counts[1,i]+= self.click_per_second[0,i]
-                refresh[1,i]+=1
+                if time.time()>t1+1:
+                    time.sleep(0.02)
+                    self.measure_wheel_velocity()
+                    counts[0,i]+= (self.click_per_second[0]).to('1/s').magnitude
+                    refresh[0,i]+=1
+                    counts[1,i]+= (self.click_per_second[1]).to('1/s').magnitude
+                    refresh[1,i]+=1
 
-            direction *=-1
+            #direction *=-1
+        self.driveMotors.set_speed([0,0])
 
         print(counts/refresh)
 
