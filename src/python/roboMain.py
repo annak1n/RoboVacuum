@@ -129,8 +129,8 @@ class Robot(object):
             [self.papirus.width/2, self.papirus.height/2, 0])
 
     def set_velocities(self,straight,angular):
-        vel = np.array([straight.to('m/s').magnitude,0,angular.to('radians/s').magnitude])
-        self.wheelSpeeds = self.RoboCsys2Wheel.dot(vel)*r.ureg.cm/r.ureg.second
+        vel = np.array([0,straight.to('m/s').magnitude,angular.to('radians/s').magnitude])
+        self.wheelSpeeds = self.RoboCsys2Wheel.dot(vel)*self.ureg.cm/self.ureg.second
 
 
     def decodeSpeeds(self, dt):
@@ -180,12 +180,12 @@ class Robot(object):
             
             # get gyroscope angle
             self.RealAngle = (self.bno.read_euler()[0])*self.ureg.degree
-            self.distance = self.distanceSensor.getDistance()
-            if isnan(self.distance):
+            test_distance = self.distanceSensor.getDistance()
+            if isnan(test_distance):
                 self.distance = 120 * self.ureg.cm
             else:
-                self.distance*= self.ureg.cm
-            self.map.update(observation(self.distance+self.bodyRadius,self.RealAngle,position=self.position))
+                self.distance= test_distance*self.ureg.cm
+            #self.map.update(observation(self.distance+self.bodyRadius,self.RealAngle,position=self.position))
                 
             
             self.controlerWS[0] = self.pid_motors[0].update(
@@ -349,7 +349,7 @@ class Robot(object):
         #X=self.turnToAngle(direction)
         self.updateSpeed(speed)
         stopped = False
-        while time.time()-t1 < 100:
+        while time.time()-t1 < 60:
             
             if self.distance < (15*self.ureg.cm):
                 if stopped == False:
