@@ -128,6 +128,11 @@ class Robot(object):
         self.midScreen = np.array(
             [self.papirus.width/2, self.papirus.height/2, 0])
 
+    def set_velocities(self,straight,angular):
+        vel = np.array([straight.to('m/s').magnitude,0,angular.to('radians/s').magnitude])
+        self.wheelSpeeds = self.RoboCsys2Wheel.dot(vel)*r.ureg.cm/r.ureg.second
+
+
     def decodeSpeeds(self, dt):
         '''Function for converting the encoder output to wheel velocities 
         '''
@@ -343,14 +348,18 @@ class Robot(object):
         speed = 25*self.ureg.cm/self.ureg.s
         #X=self.turnToAngle(direction)
         self.updateSpeed(speed)
-        while time.time()-t1 < 10:
-
+        stopped = False
+        while time.time()-t1 < 100:
+            
             if self.distance < (15*self.ureg.cm):
-                direction = random.uniform(0,360)*self.ureg.degrees
-                self.updateSpeed(0*self.ureg.cm/self.ureg.s)
-                #self.turnToAngle(direction)
-                #if self.distance > 10*self.ureg.cm:
-            self.updateSpeed(speed)
+                if stopped == False:
+                    direction = random.uniform(0,360)*self.ureg.degrees
+                    self.updateSpeed(0*self.ureg.cm/self.ureg.s)
+                    self.turnToAngle(direction)
+                stopped=True
+                if self.distance > 20*self.ureg.cm:
+                    stopped=False
+                    self.updateSpeed(speed)
             time.sleep(0.02)
 
 
