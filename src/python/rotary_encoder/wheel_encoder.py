@@ -19,7 +19,7 @@ class WheelEncoder:
 		GPIO.setup(38, GPIO.OUT)
 		GPIO.setup(40, GPIO.IN)
 		GPIO.output(38,1)
-
+		self.old_count=np.array([0,0])
 	# delay()
 	# simple busy loop delay
 	def __delay(self, n):
@@ -62,7 +62,10 @@ class WheelEncoder:
 		counts = np.empty((2))	
 		counts[0] = float(self.__read_16())
 		counts[1] = float(self.__read_16())
-		print(counts)
+		if counts[1]>20000:
+				return self.old_count
+		self.old_counts=counts
+		#print(counts)
 		return (counts)
 
 

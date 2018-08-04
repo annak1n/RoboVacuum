@@ -43,7 +43,7 @@ while True:
     
     #r.setSpeedAngleManual()
     #worker=thread.start_new_thread(text.write,('Distance= '+str(distance),))
-    os.system('cls' if os.name == 'nt' else 'clear')
+    #os.system('cls' if os.name == 'nt' else 'clear')
     #print(r.speed,r.RealAngle,r.temp)
    # print('angle=', angle[0],'distance= ',float(distance))
 
@@ -52,20 +52,19 @@ while True:
         quit()
     elif key == 'w':
         speed+=5*ureg.cm/ureg.seconds
-        # motors.set_speed([255,255])
-    elif key == 'a':
+    elif key == 'd':
         speed[0]-=5*ureg.cm/ureg.seconds
         speed[1]+=5*ureg.cm/ureg.seconds
-    elif key == 'd':
+    elif key == 'a':
         speed[0]+=5*ureg.cm/ureg.seconds
         speed[1]-=5*ureg.cm/ureg.seconds
     elif key == 's':
         speed-=5*ureg.cm/ureg.seconds
     elif key == 'r':
-        self.driveMotors.set_speed([255,255,255])
+        brushMotors.set_speed([255,255,255])
 
     elif key == 'e':
-        self.driveMotors.set_speed([0,0,0])
+        brushMotors.set_speed([0,0,0])
     else:
         a = 1
     r.set_speed(speed)

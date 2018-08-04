@@ -47,7 +47,6 @@ class Robot(object):
         - Connection to distance sensor
         '''
         self.ureg = ureg
-        self.driveMotors = MC.motor_group([0x61, 0x61], [1, 3], [1, -1])
         self.brushMotors = MC.motor_group(
             [0x60, 0x60, 0X61], [1, 3, 4], [-1, 1, 1])
         self.bno = BNO055(serial_port='/dev/ttyUSB0', rst=None)
@@ -65,7 +64,7 @@ class Robot(object):
         self.distance = 0*self.ureg.cm
         self.speed = 0
         self.setAngle = 0.0
-        self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
+        self.RealAngle = (self.bno.read_euler()[0])*self.ureg.degree
         self.OdoAngle = 0
         self.pid_angle = PID(I=0.0, P=1.0, D=0, Angle=True,unit=self.ureg.radians)
 
@@ -93,7 +92,7 @@ class Robot(object):
         self.stopDistance = False
         self.clicks = np.zeros(2)
         self.rotation = np.zeros((3, 3))
-        self.wheel_control = wheel_control()
+        self.wheel_controls = wheel_control()
 
 
         self.location = np.array([200, 200])
@@ -118,7 +117,8 @@ class Robot(object):
         sleep = (1/50)*1000000
         while self.sema == True:
             wiringpi.delayMicroseconds(sleep)
-            self.RealAngle = (self.bno.read_euler()[0])*self.degree
+            #print(self.RealAngle)
+            self.RealAngle = (self.bno.read_euler()[0])*ureg.degree
             test_distance = self.distanceSensor.getDistance()
             if isnan(test_distance):
                 self.distance = 120 * ureg.cm
@@ -128,44 +128,47 @@ class Robot(object):
     def begin(self):
         self.sema = True
         print("starting guidance")
-        self.guidence = thread.start_new_thread(self.wheel_control.run_motor_control, (1,))
+        self.guidence = thread.start_new_thread(self.wheel_controls.run_motor_control, (1,))
         self.sense = thread.start_new_thread(self.sensors, (1,))
-        self.startBrush()
+        #self.startBrush()
         #self.mapping = thread.start_new_thread(self.logDistance, (1,))
         # self.collision=thread.start_new_thread(self.collisionDetection,(1,))
         print("gidance thread initiated")
 
     def turnToAngle(self,angle):
-        self.wheel_control.set_speed([-10,10]*ureg.cm/ureg.second)
+        self.wheel_controls.set_speed(np.array([-120,120])*ureg.cm/ureg.second)
 
         error = GetAngleDifference(self.RealAngle,angle)
-        while error>5*ureg.degrees:
+        while error.to('degrees')>5.0*ureg.degrees:
             time.sleep(0.1)
             error = GetAngleDifference(self.RealAngle,angle)
-        self.wheel_control.set_speed([0,0]*ureg.cm/ureg.second)
+            print("cur angle",self.RealAngle)
+        self.wheel_controls.set_speed([0,0]*ureg.cm/ureg.second)
 
 
     def random_run(self):
 
         direction = random.uniform(0,360)*self.ureg.degrees
-
+        print('new_angle',direction)
         t1 = time.time()
         dist_flop = True
-        speed = 25*self.ureg.cm/self.ureg.s
-        self.turnToAngle(direction)
-        self.wheel_control.set_speed([speed,speed])
-        stopped = False
-        while time.time()-t1 < 60:
+        speed = np.array([100,100])*self.ureg.cm/self.ureg.second
+        #self.turnToAngle(direction)
+        self.wheel_controls.set_speed(speed)
+        free_path = True
+        while time.time()-t1 < 60*20:
+            if self.distance > 10*self.ureg.cm:
+                free_path = True
+            else:
+                free_path = False
             
-            if self.distance < (15*self.ureg.cm):
-                if stopped == False:
-                    direction = random.uniform(0,360)*self.ureg.degrees
-                    self.wheel_control.set_speed([0*self.ureg.cm/self.ureg.s,0*self.ureg.cm/self.ureg.s])
-                    self.turnToAngle(direction)
-                stopped=True
-                if self.distance > 20*self.ureg.cm:
-                    stopped=False
-                    self.wheel_control.set_speed([speed,speed])
+            if free_path == False:
+                direction = random.uniform(0,360)*self.ureg.degrees
+                self.wheel_controls.set_speed(np.array([0,0])*self.ureg.cm/self.ureg.second)
+                self.turnToAngle(direction)
+            else:
+                free_path=True
+                self.wheel_controls.set_speed(speed)
             time.sleep(0.02)
     def stop(self):
         self.sema = False
