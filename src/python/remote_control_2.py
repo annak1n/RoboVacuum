@@ -5,9 +5,10 @@ import os
 import tty
 import sys
 import select
-from roboMain import Robot
-
-
+from DWR_wheel_control import wheel_control
+from dimensions import ureg
+import thread
+import numpy as np
 def getch():
     try:
         import termios
@@ -27,9 +28,10 @@ def getch():
     return ch
 
 
-r = Robot()
+r = wheel_control()
 
-r.begin()
+guidence = thread.start_new_thread(r.run_motor_control, (1,))
+speed = np.array([0,0])*ureg.cm/ureg.seconds
 while True:
     key = getch()
 
@@ -38,30 +40,28 @@ while True:
     #r.setSpeedAngleManual()
     #worker=thread.start_new_thread(text.write,('Distance= '+str(distance),))
     os.system('cls' if os.name == 'nt' else 'clear')
-    print(r.speed,r.RealAngle,r.temp)
+    #print(r.speed,r.RealAngle,r.temp)
    # print('angle=', angle[0],'distance= ',float(distance))
+
     if key == 'q':
-        r.updateSpeedAngle(0, 0)
+        speed*=0
         quit()
     elif key == 'w':
-        r.updateDeltaSpeedAngle(10, 0)
+        speed+=5*ureg.cm/ureg.seconds
         # motors.set_speed([255,255])
     elif key == 'a':
-        r.updateDeltaSpeedAngle(0, -5)
-        # motors.set_speed([100,-100])
+        speed[0]-=5*ureg.cm/ureg.seconds
+        speed[1]+=5*ureg.cm/ureg.seconds
     elif key == 'd':
-        r.updateDeltaSpeedAngle(0, 5)
-        # motors.set_speed([-100,100])
+        speed[0]+=5*ureg.cm/ureg.seconds
+        speed[1]-=5*ureg.cm/ureg.seconds
     elif key == 's':
-        r.updateDeltaSpeedAngle(-10, 0)
+        speed-=5*ureg.cm/ureg.seconds
     elif key == 'r':
-        r.startBrush()
+        pass
 
     elif key == 'e':
-        r.stopBrush()
-        r.stop()
-        time.sleep(1)
-        r.updateSpeedAngle(0, 0)
-        r.setSpeedAngleManual()
+        pass
     else:
         a = 1
+    r.set_speed(speed)
