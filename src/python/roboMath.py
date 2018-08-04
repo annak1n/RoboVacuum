@@ -70,4 +70,12 @@ class DWR_transformations:
         X = self.global_speeds(angle,wheel_speed)
         return (X[0:2]*ureg.cm/ureg.seconds , X[2]*ureg.radians/ureg.seconds)
 
-
+    def rotation_matrix(self,angle):
+        c = cos(angle.to('radians').magnitude)
+        s = sin(angle.to('radians').magnitude)
+        R = np.zeros((2,2))
+        R[0,0]=c
+        R[1,0]=s
+        R[0,1]=-s
+        R[1,1]=c
+        return R

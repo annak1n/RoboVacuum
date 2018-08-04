@@ -67,7 +67,7 @@ class Robot(object):
         self.setAngle = 0.0
         self.RealAngle = self.bno.read_euler()[0]*self.ureg.degree
         self.OdoAngle = 0
-        self.pid_angle = PID(I=.005, P=1.0, D=0, Angle=True,unit=self.ureg.radians)
+        self.pid_angle = PID(I=0.0, P=1.0, D=0, Angle=True,unit=self.ureg.radians)
 
 
         self.bodyRadius = (32.0/2.0)*self.ureg.cm  # cm
@@ -114,7 +114,7 @@ class Robot(object):
 
 
 
-    def sensors(self):
+    def sensors(self,A):
         sleep = (1/50)*1000000
         while self.sema == True:
             wiringpi.delayMicroseconds(sleep)
@@ -124,6 +124,59 @@ class Robot(object):
                 self.distance = 120 * ureg.cm
             else:
                 self.distance= test_distance*ureg.cm
+
+    def begin(self):
+        self.sema = True
+        print("starting guidance")
+        self.guidence = thread.start_new_thread(self.wheel_control.run_motor_control, (1,))
+        self.sense = thread.start_new_thread(self.sensors, (1,))
+        self.startBrush()
+        #self.mapping = thread.start_new_thread(self.logDistance, (1,))
+        # self.collision=thread.start_new_thread(self.collisionDetection,(1,))
+        print("gidance thread initiated")
+
+    def turnToAngle(self,angle):
+        self.wheel_control.set_speed([-10,10]*ureg.cm/ureg.second)
+
+        error = GetAngleDifference(self.RealAngle,angle)
+        while error>5*ureg.degrees:
+            time.sleep(0.1)
+            error = GetAngleDifference(self.RealAngle,angle)
+        self.wheel_control.set_speed([0,0]*ureg.cm/ureg.second)
+
+
+    def random_run(self):
+
+        direction = random.uniform(0,360)*self.ureg.degrees
+
+        t1 = time.time()
+        dist_flop = True
+        speed = 25*self.ureg.cm/self.ureg.s
+        self.turnToAngle(direction)
+        self.wheel_control.set_speed([speed,speed])
+        stopped = False
+        while time.time()-t1 < 60:
+            
+            if self.distance < (15*self.ureg.cm):
+                if stopped == False:
+                    direction = random.uniform(0,360)*self.ureg.degrees
+                    self.wheel_control.set_speed([0*self.ureg.cm/self.ureg.s,0*self.ureg.cm/self.ureg.s])
+                    self.turnToAngle(direction)
+                stopped=True
+                if self.distance > 20*self.ureg.cm:
+                    stopped=False
+                    self.wheel_control.set_speed([speed,speed])
+            time.sleep(0.02)
+    def stop(self):
+        self.sema = False
+
+    def startBrush(self):
+        worker = thread.start_new_thread(
+            self.brushMotors.set_speed, ([255, 255, 255],))
+
+    def stopBrush(self):
+        worker = thread.start_new_thread(
+            self.brushMotors.set_speed, ([0, 0, 0],))
 
 '''
     def updateSpeedAngle(self, setSpeed, setAngle):
@@ -161,13 +214,7 @@ class Robot(object):
         self.papirus.update()
         print(len(self.observations))
 
-    def begin(self):
-        self.sema = True
-        print("starting guidance")
-        self.guidence = thread.start_new_thread(self.wheel_control.run_motor_control, (1,))
-        #self.mapping = thread.start_new_thread(self.logDistance, (1,))
-        # self.collision=thread.start_new_thread(self.collisionDetection,(1,))
-        print("gidance thread initiated")
+
 
     def logDistance(self, a):
         dist_vect = np.zeros(3)
@@ -197,15 +244,15 @@ class Robot(object):
         while True:
 
             print("B")
-            self.updateSpeedAngle(5, angle)
+            self.wheel_control.set_speedAngle(5, angle)
 
             print(self.distance)
             while self.distance > 5.0:
                 time.sleep(0.1)
-            self.updateSpeedAngle(0, angle+delta)
+            self.wheel_control.set_speedAngle(0, angle+delta)
             time.sleep(2)
             startpos = self.position[1:2]
-            self.updateSpeedAngle(50, angle+delta)
+            self.wheel_control.set_speedAngle(50, angle+delta)
             while np.linalg.norm(self.position[1:2]-startpos) < 10 and self.distance > 5:
                 time.sleep(0.1)
 
@@ -216,61 +263,12 @@ class Robot(object):
                 angle = 0
                 delta = pi/2
     '''
-    def turnToAngle(self, angle):
 
-        self.pid_angle.setPoint(angle)
-        velocity = np.zeros(3)
-        self.pid_motors[0].setPoint(vel_2_pmw(5)*self.ureg.cm/self.ureg.seconds  )
-        self.pid_motors[1].setPoint(vel_2_pmw(-5)*self.ureg.cm/self.ureg.seconds)
-        self.pid_angle.error = 100
-        limit = 15*self.ureg.degrees
-        
-        while abs(GetAngleDifference(self.RealAngle,angle)) > limit:
-            time.sleep(0.001)
-            #self.pid_angle.update()
-        self.pid_motors[0].setPoint(0*self.ureg.cm/self.ureg.seconds  )
-        self.pid_motors[1].setPoint(0*self.ureg.cm/self.ureg.seconds)
-        return True
 
-    def updateSpeed(self, speed):
-        self.pid_motors[0].setPoint(vel_2_pmw(speed))
-        self.pid_motors[1].setPoint(vel_2_pmw(speed))
 
-    def random_run(self):
-
-        direction = random.uniform(0,360)*self.ureg.degrees
-
-        t1 = time.time()
-        dist_flop = True
-        speed = 25*self.ureg.cm/self.ureg.s
-        #X=self.turnToAngle(direction)
-        self.updateSpeed(speed)
-        stopped = False
-        while time.time()-t1 < 60:
-            
-            if self.distance < (15*self.ureg.cm):
-                if stopped == False:
-                    direction = random.uniform(0,360)*self.ureg.degrees
-                    self.updateSpeed(0*self.ureg.cm/self.ureg.s)
-                    self.turnToAngle(direction)
-                stopped=True
-                if self.distance > 20*self.ureg.cm:
-                    stopped=False
-                    self.updateSpeed(speed)
-            time.sleep(0.02)
 
 
                 
 
-    def stop(self):
-        self.sema = False
-
-    def startBrush(self):
-        worker = thread.start_new_thread(
-            self.brushMotors.set_speed, ([255, 255, 255],))
-
-    def stopBrush(self):
-        worker = thread.start_new_thread(
-            self.brushMotors.set_speed, ([0, 0, 0],))
 
 
