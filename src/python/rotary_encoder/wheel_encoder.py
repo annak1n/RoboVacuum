@@ -1,3 +1,4 @@
+import numpy as np
 try:
 	import RPi.GPIO as GPIO
 
@@ -56,10 +57,12 @@ class WheelEncoder:
 	# Start by sending a guard pulse, then read the two 16 bit counter
 	# values onee after the other
 
-	def read_counters(self,counts):
-		self.__guard_pulse()	
+	def read_counters(self):
+		self.__guard_pulse()
+		counts = np.empty((2))	
 		counts[0] = float(self.__read_16())
 		counts[1] = float(self.__read_16())
+		print(counts)
 		return (counts)
 
 

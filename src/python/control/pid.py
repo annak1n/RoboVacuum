@@ -13,6 +13,7 @@
 #
 
 from math import pi
+import numpy as np
 def GetAngleDifference(A, B):
     '''
 
@@ -50,12 +51,12 @@ class PID:
         """
         Calculate PID output value for given reference input and feedback
         """
-
         if self.Angle == True:
             self.error = GetAngleDifference(self.set_point, current_value)
         else:
             self.error = self.set_point - current_value
-
+        
+        
         self.P_value = self.Kp * self.error
         self.D_value = self.Kd * (self.error - self.Derivator)
         self.Derivator = self.error
@@ -72,6 +73,7 @@ class PID:
         PID = self.P_value + self.I_value + self.D_value
 
         return PID
+
 
     def setPoint(self, set_point):
         """

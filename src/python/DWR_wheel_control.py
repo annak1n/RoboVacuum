@@ -12,13 +12,11 @@ import shelve
 import thread
 from scipy.interpolate import interp1d
 
-class pwm_input:
-    def convert(self,v):
-        return(v*6.27)
+
 
 class wheel_control:
 
-    def __init__(self,clicks_per_rotations= 1024.0, PID_values={'P':1.25,'I':0.75,'D':0.0025}, wheel_radius=3.0*ureg.cm,controler_frequency=50.0/ureg.second, pwm_input_converter = pwm_input, calibration = True):
+    def __init__(self,clicks_per_rotations= 1024.0, PID_values={'P':1.25,'I':0.75,'D':0.0025}, wheel_radius=3.0*ureg.cm,controler_frequency=50.0/ureg.second, calibration = True):
         ''' Class to control the wheels of a DWR robot
         Each wheel has an independent PID controller
         The velocities of the wheels are determined using hub encoders, this signal is filtered to reduce noise from high sample rates
@@ -45,11 +43,9 @@ class wheel_control:
         self.wheel_velocities_measured = np.zeros((2))*ureg.cm/ureg.second
         self.wheel_velocities_controller = np.zeros((2))/ureg.seconds
         self.wheel_velocities_desired = np.zeros((2))*ureg.cm/ureg.second
-        temp = np.array([0,0])
-        self.rotEncode.read_counters(temp)
+        _ = self.rotEncode.read_counters()
 
         self.click_per_second = np.zeros((2))/ureg.seconds
-        self.pwm_input_converter = pwm_input_converter
 
         self.non_stop=True
         #try:
@@ -61,8 +57,10 @@ class wheel_control:
         db = shelve.open(file)
         wheel_calib_data_pwm_speed=db['wheel_calib_data_pwm_speed']
         wheel_calib_data_cps = db['wheel_calib_data_cps']
-        self.interpolator=[interp1d(wheel_calib_data_cps[0,:], wheel_calib_data_pwm_speed, kind='cubic',bounds_error=False),
-                           interp1d(wheel_calib_data_cps[1,:], wheel_calib_data_pwm_speed, kind='cubic',bounds_error=False)]
+        zero_idx = len(wheel_calib_data_pwm_speed)//2
+        wheel_calib_data_cps[:,zero_idx]=0
+        self.interpolator=[interp1d(wheel_calib_data_cps[0,:], wheel_calib_data_pwm_speed, kind='cubic',bounds_error=False,fill_value=(-255,255)),
+                           interp1d(wheel_calib_data_cps[1,:], wheel_calib_data_pwm_speed, kind='cubic',bounds_error=False,fill_value=(-255,255))]
 
 
     def set_speed(self,wheel_velocities):
@@ -79,9 +77,9 @@ class wheel_control:
 
     def measure_wheel_velocity(self):
 
-        self.clicks = np.copysign(self.rotEncode.read_counters(self.clicks), self.wheel_velocities_desired)
-        #print(self.clicks)
-        self.encoder_values.update(self.clicks)
+        self.clicks = np.copysign(self.rotEncode.read_counters()*ureg.dimensionless, self.wheel_velocities_controller.magnitude)
+        if self.clicks[1]!=3.27700000e+04:
+            self.encoder_values.update(self.clicks)
         self.click_per_second = self.encoder_values.value()*self.frequency
         self.wheel_velocities_measured = self.encoder_values.value()*self.cm_per_click*self.frequency
     
@@ -92,7 +90,8 @@ class wheel_control:
     def set_wheel_velocties(self):
         speed=np.array([self.interpolator[0](self.wheel_velocities_controller[0].to('1/s').magnitude)
             ,self.interpolator[0](self.wheel_velocities_controller[1].to('1/s').magnitude)])
-        print(speed)
+        #print("before interp",self.wheel_velocities_controller)
+        #print("set_to",speed)
         self.driveMotors.set_speed(speed)
 
 
@@ -111,11 +110,11 @@ class wheel_control:
     def stop(self):
         self.non_stop=False
 
-    def self_calibrate(self,steps=5,file ='wheel_calibration.db'):
+    def self_calibrate(self,steps=11,file ='wheel_calibration.db'):
 
         direction=1
 
-        speeds = np.linspace(0,255,num=steps)
+        speeds = np.linspace(-255,255,num=steps)
         counts= np.zeros((2,steps))
         refresh = np.zeros((2,steps))
         #self.guidence = thread.start_new_thread(self.run_motor_control, (1,))
@@ -123,14 +122,14 @@ class wheel_control:
         for i in range(steps):
             self.driveMotors.set_speed([speeds[i]*direction,speeds[i]*direction])
             t1 = time.time()
-            self.rotEncode.read_counters(np.array([0,0]))
+            self.rotEncode.read_counters()
             while time.time() < t1+3:
                 if time.time()>t1+1:
                     time.sleep(0.02)
                     self.measure_wheel_velocity()
-                    counts[0,i]+= (self.click_per_second[0]).to('1/s').magnitude
+                    counts[0,i]+= np.copysign((self.click_per_second[0]).to('1/s').magnitude,speeds[i])
                     refresh[0,i]+=1
-                    counts[1,i]+= (self.click_per_second[1]).to('1/s').magnitude
+                    counts[1,i]+= np.copysign((self.click_per_second[1]).to('1/s').magnitude,speeds[i])
                     refresh[1,i]+=1
 
             #direction *=-1
