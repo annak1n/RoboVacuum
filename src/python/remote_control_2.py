@@ -9,6 +9,7 @@ from DWR_wheel_control import wheel_control
 from dimensions import ureg
 import thread
 import numpy as np
+import motor_control.motor_class as MC
 def getch():
     try:
         import termios
@@ -32,6 +33,9 @@ r = wheel_control()
 
 guidence = thread.start_new_thread(r.run_motor_control, (1,))
 speed = np.array([0,0])*ureg.cm/ureg.seconds
+
+brushMotors = MC.motor_group([0x60, 0x60, 0X61], [1, 3, 4], [-1, 1, 1])
+
 while True:
     key = getch()
 
@@ -58,10 +62,10 @@ while True:
     elif key == 's':
         speed-=5*ureg.cm/ureg.seconds
     elif key == 'r':
-        pass
+        self.driveMotors.set_speed([255,255,255])
 
     elif key == 'e':
-        pass
+        self.driveMotors.set_speed([0,0,0])
     else:
         a = 1
     r.set_speed(speed)
