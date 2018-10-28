@@ -108,6 +108,10 @@ class wheel_control:
             delay = int((interval - time.time()*ureg.seconds).to('microsecond').magnitude)
             if delay > 0:
                 wiringpi.delayMicroseconds( delay )
+            else:
+                f = open('timing_error/'+str(abs(delay)))
+                f.write(str(delay))
+                f.close()
 
     def stop(self):
         self.non_stop=False

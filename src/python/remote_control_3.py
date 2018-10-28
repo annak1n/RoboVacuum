@@ -10,9 +10,8 @@ from dimensions import ureg
 import thread
 import numpy as np
 import motor_control.motor_class as MC
-from mpi4py import MPI
+from ADC.IR_distance import distanceMeas
 
-comm = MPI.Comm
 
 def getch():
     try:
@@ -32,47 +31,52 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
-if comm.rank==1:
-    r = wheel_control(controler_frequency=25)
 
-    guidence = thread.start_new_thread(r.run_motor_control, (1,))
+r = wheel_control()
+
+guidence = thread.start_new_thread(r.run_motor_control, (1,))
 speed = np.array([0,0])*ureg.cm/ureg.seconds
-if comm.rank==0:
-    brushMotors = MC.motor_group([0x60, 0x60, 0X61], [1, 3, 4], [-1, 1, 1])
+
+brushMotors = MC.motor_group([0x60, 0x60, 0X61], [1, 3, 4], [-1, 1, 1])
 
 while True:
     key = getch()
 
-    time.sleep(0.05)
-    
+    time.sleep(0.01)
+    changed = False
     #r.setSpeedAngleManual()
     #worker=thread.start_new_thread(text.write,('Distance= '+str(distance),))
     #os.system('cls' if os.name == 'nt' else 'clear')
     #print(r.speed,r.RealAngle,r.temp)
    # print('angle=', angle[0],'distance= ',float(distance))
-    if comm.rank==0:
-        
-        if key == 'q':
-            speed*=0
-            quit()
-        elif key == 'w':
-            speed+=5*ureg.cm/ureg.seconds
-        elif key == 'd':
-            speed[0]-=5*ureg.cm/ureg.seconds
-            speed[1]+=5*ureg.cm/ureg.seconds
-        elif key == 'a':
-            speed[0]+=5*ureg.cm/ureg.seconds
-            speed[1]-=5*ureg.cm/ureg.seconds
-        elif key == 's':
-            speed-=5*ureg.cm/ureg.seconds
-        elif key == 'r':
-            brushMotors.set_speed([255,255,255])
 
-        elif key == 'e':
-            brushMotors.set_speed([0,0,0])
-        else:
-            a = 1
-        comm.send(speed,dest=1)
-    if comm.rank==1:
-        speed=comm.recv(source=0)    
-        r.set_speed(speed)
+    if key == 'q':
+        speed*=0
+        quit()
+    elif key == 'w':
+        changed=True
+        speed+=150*ureg.cm/ureg.seconds
+    elif key == 'd':
+        changed=True
+        speed[0]-=50*ureg.cm/ureg.seconds
+        speed[1]+=50*ureg.cm/ureg.seconds
+    elif key == 'a':
+        changed=True
+        speed[0]+=50*ureg.cm/ureg.seconds
+        speed[1]-=50*ureg.cm/ureg.seconds
+    elif key == 's':
+        changed=True
+        speed-=75*ureg.cm/ureg.seconds
+    elif key == 'r':
+        brushMotors.set_speed([255,255,255])
+
+    elif key == 'e':
+        brushMotors.set_speed([0,0,0])
+    else:
+        a = 1
+    
+    if changed:
+      r.set_speed(speed)
+      time.sleep(2)
+      speed*=0
+      r.set_speed(speed)
