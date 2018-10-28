@@ -16,7 +16,7 @@ from scipy.interpolate import interp1d
 
 class wheel_control:
 
-    def __init__(self,clicks_per_rotations= 1024.0, PID_values={'P':0.5,'I':0.01,'D':0.1}, wheel_radius=3.0*ureg.cm,controler_frequency=50.0/ureg.second, calibration = True):
+    def __init__(self,clicks_per_rotations= 1024.0, PID_values={'P':0.75,'I':0.0,'D':0.1}, wheel_radius=3.0*ureg.cm,controler_frequency=25.0/ureg.second, calibration = True):
         ''' Class to control the wheels of a DWR robot
         Each wheel has an independent PID controller
         The velocities of the wheels are determined using hub encoders, this signal is filtered to reduce noise from high sample rates
@@ -71,7 +71,7 @@ class wheel_control:
         clicks_desired = (self.clicks_per_cm * wheel_velocities)
         self.pid_motors[0].setPoint(clicks_desired[0])
         self.pid_motors[1].setPoint(clicks_desired[1])
-        print("set controller",self.wheel_velocities_desired,clicks_desired)
+        #print("set controller",self.wheel_velocities_desired,clicks_desired)
 
     
     def error_to_set_velocities(self):

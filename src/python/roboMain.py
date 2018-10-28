@@ -114,7 +114,7 @@ class Robot(object):
 
 
     def sensors(self,A):
-        sleep = (1/50)*1000000
+        sleep = (1/25)*1000000
         while self.sema == True:
             wiringpi.delayMicroseconds(sleep)
             #print(self.RealAngle)
@@ -136,13 +136,13 @@ class Robot(object):
         print("gidance thread initiated")
 
     def turnToAngle(self,angle):
-        self.wheel_controls.set_speed(np.array([-120,120])*ureg.cm/ureg.second)
+        self.wheel_controls.set_speed(np.array([60,-60])*ureg.cm/ureg.second)
 
         error = GetAngleDifference(self.RealAngle,angle)
         while error.to('degrees')>5.0*ureg.degrees:
-            time.sleep(0.1)
+            time.sleep(0.02)
             error = GetAngleDifference(self.RealAngle,angle)
-            print("cur angle",self.RealAngle)
+            #print("cur angle",self.RealAngle)
         self.wheel_controls.set_speed([0,0]*ureg.cm/ureg.second)
 
 
@@ -153,22 +153,37 @@ class Robot(object):
         t1 = time.time()
         dist_flop = True
         speed = np.array([100,100])*self.ureg.cm/self.ureg.second
+        spiral = False
         #self.turnToAngle(direction)
         self.wheel_controls.set_speed(speed)
         free_path = True
+        path_time = time.time()
         while time.time()-t1 < 60*20:
             if self.distance > 10*self.ureg.cm:
                 free_path = True
             else:
                 free_path = False
             
+            if time.time()>path_time+10:
+                free_path = False
+                
+
             if free_path == False:
-                direction = random.uniform(0,360)*self.ureg.degrees
+                direction = self.RealAngle + random.uniform(90,270)*self.ureg.degrees
+                if direction>(360*self.ureg.degrees):
+                    direction -= 360*self.ureg.degrees
                 self.wheel_controls.set_speed(np.array([0,0])*self.ureg.cm/self.ureg.second)
+                time.sleep(0.25)
                 self.turnToAngle(direction)
+                time.sleep(0.25)
+                path_time=time.time()
+                
             else:
                 free_path=True
                 self.wheel_controls.set_speed(speed)
+            if spiral:
+                speed[1]=speed[0]*(time.time()-free_path)/10
+
             time.sleep(0.02)
     def stop(self):
         self.sema = False
