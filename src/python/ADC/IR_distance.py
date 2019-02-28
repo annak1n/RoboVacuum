@@ -11,12 +11,12 @@ import time
 class distanceMeas():
   
   
-  def __init__(self,add1=0x69,add2=0x6b,channel=1,calibrationFile=False):
+  def __init__(self,add1=0x69,add2=0x6b,channels=[1,2,3,4,5],calibrationFile=False):
     i2c_helper = ABEHelpers()
     self.bus = i2c_helper.get_smbus()
     self.adc = ADCPi(self.bus, add1, add2, 12)
     self.calibrationFile=calibrationFile
-    self.channel=channel
+    self.channels=channels
     
     if calibrationFile!=False:
       db = shelve.open(calibrationFile)
@@ -31,17 +31,17 @@ class distanceMeas():
     return(Voltage)
     
   def getDistance(self):
-    voltage=self.adc.read_voltage(self.channel)
-    return(self.interpolator(voltage))
+    voltages=[self.adc.read_voltage(channel) for channel in self.channels]
+    return([self.interpolator(voltage) for volatage in voltages])
 
-  def calibrate(self,calibrationFile='calibration_data.db'):
+  def calibrate(self,channel=3,calibrationFile='calibration_data.db'):
     self.calibration = np.empty( shape=(0, 0) )
     diff=1
     entries=0
     old_voltage=0
     while diff>0:
       distance = float(raw_input("Please enter distance to sensor (cm):/n always decrease distance "))
-      voltage=float(self.adc.read_voltage(self.channel))
+      voltage=float(self.adc.read_voltage(channel))
       diff=voltage-old_voltage
       if diff>0:
         self.calibration=np.append(self.calibration,[voltage, distance])
